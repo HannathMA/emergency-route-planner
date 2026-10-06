@@ -1,3 +1,10 @@
+import os
+import sys
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
 from flask import (
     Flask,
     render_template,
@@ -19,8 +26,8 @@ from ai.agent import EmergencyVehicleAgent
 
 app = Flask(
     __name__,
-    template_folder="frontend",
-    static_folder="frontend/static"
+    template_folder=os.path.join(BASE_DIR, "frontend"),
+    static_folder=os.path.join(BASE_DIR, "frontend", "static")
 )
 
 # -----------------------------
