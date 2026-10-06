@@ -1,4 +1,4 @@
-// Kerala Emergency Route Planner - Professional Frontend Controller
+// Kerala Emergency Route Planner - Professional Interactive Frontend Controller
 
 let networkData = window.INITIAL_DATA || {
     roads: [],
@@ -12,6 +12,14 @@ let currentRoutePath = [];
 let currentBlockedRoads = [];
 let lastDispatchResult = null;
 
+// Simulation State
+let isSimulating = false;
+let simIndex = 0;
+let simTimer = null;
+let simSpeed = 1;
+let soundEnabled = true;
+let audioCtx = null;
+
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", async () => {
     onEmergencyChange();
@@ -20,6 +28,88 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Initial dispatch execution
     dispatchEmergency();
 });
+
+// Sound Generator using Web Audio API (No external sound files required)
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
+
+function playSound(type = "click") {
+    if (!soundEnabled) return;
+    try {
+        initAudio();
+        if (audioCtx.state === "suspended") {
+            audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        if (type === "click") {
+            osc.frequency.setValueAtTime(600, now);
+            gain.gain.setValueAtTime(0.08, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+            osc.start(now);
+            osc.stop(now + 0.08);
+        } else if (type === "chime") {
+            osc.frequency.setValueAtTime(523.25, now); // C5
+            osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.12); // E5
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+            osc.start(now);
+            osc.stop(now + 0.25);
+        } else if (type === "arrive") {
+            osc.frequency.setValueAtTime(587.33, now); // D5
+            osc.frequency.setValueAtTime(880.00, now + 0.1); // A5
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+            osc.start(now);
+            osc.stop(now + 0.35);
+        } else if (type === "warning") {
+            osc.frequency.setValueAtTime(350, now);
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+            osc.start(now);
+            osc.stop(now + 0.15);
+        }
+    } catch (e) {
+        // Audio error fallback
+    }
+}
+
+function toggleAudio() {
+    soundEnabled = !soundEnabled;
+    const btn = document.getElementById("audioToggleBtn");
+    btn.innerHTML = soundEnabled ? "🔊" : "🔇";
+    showToast(soundEnabled ? "Audio Effects Enabled" : "Audio Muted", "info");
+}
+
+// Toast Notifications System
+function showToast(message, type = "success") {
+    const container = document.getElementById("toastContainer");
+    if (!container) return;
+
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+
+    let icon = "✓";
+    if (type === "warning") icon = "⚠️";
+    if (type === "danger") icon = "✕";
+    if (type === "info") icon = "ℹ️";
+
+    toast.innerHTML = `<span style="font-size: 15px;">${icon}</span> <span>${message}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.animation = "toastOut 0.3s ease forwards";
+        setTimeout(() => toast.remove(), 300);
+    }, 3200);
+}
 
 // Fetch current network state
 async function fetchNetworkState() {
@@ -89,10 +179,70 @@ function getRoadSegmentCost(source, dest) {
     return road ? road.cost : 0;
 }
 
+// Preset Scenario Selector (1-Click Interactive Test)
+async function loadScenario(scenarioType) {
+    playSound("click");
+    // Clear preset button active classes
+    document.querySelectorAll(".preset-btn").forEach(b => b.classList.remove("active"));
+
+    const emergencySelect = document.getElementById("emergencySelect");
+    const algoSelect = document.getElementById("dispatchAlgorithm");
+
+    if (scenarioType === "cardiac") {
+        document.getElementById("presetCardiac").classList.add("active");
+        emergencySelect.value = "E002"; // Cardiac
+        algoSelect.value = "astar";
+        await clearAllBlocks(false);
+        showToast("Loaded Scenario: Cardiac Emergency (Infopark ➔ Aster Medcity)", "info");
+    } else if (scenarioType === "accident") {
+        document.getElementById("presetAccident").classList.add("active");
+        emergencySelect.value = "E001"; // Accident
+        algoSelect.value = "astar";
+        await clearAllBlocks(false);
+        showToast("Loaded Scenario: Highway Collision on Seaport-Airport Road", "info");
+    } else if (scenarioType === "fire") {
+        document.getElementById("presetFire").classList.add("active");
+        emergencySelect.value = "E003"; // Fire
+        algoSelect.value = "astar";
+        await clearAllBlocks(false);
+        showToast("Loaded Scenario: Industrial Fire Rescue Operation", "info");
+    } else if (scenarioType === "blocked_corridor") {
+        document.getElementById("presetBlock").classList.add("active");
+        emergencySelect.value = "E002";
+        algoSelect.value = "astar";
+        // Block Edappally to Palarivattom to demonstrate dynamic re-routing via Kaloor
+        await performRoadToggle("Palarivattom", "Edappally", true, false);
+        showToast("Test Roadblock Applied: Palarivattom ⟷ Edappally Corridor Blocked!", "warning");
+    }
+
+    onEmergencyChange();
+    syncAlgorithmTabs(algoSelect.value);
+    await dispatchEmergency();
+}
+
+// Algorithm Quick Tabs Switcher
+async function switchAlgorithmTab(algoKey) {
+    playSound("click");
+    document.getElementById("dispatchAlgorithm").value = algoKey;
+    syncAlgorithmTabs(algoKey);
+    await dispatchEmergency();
+    showToast(`Switched Search Strategy to ${algoKey.toUpperCase()}`, "info");
+}
+
+function syncAlgorithmTabs(algoKey) {
+    document.querySelectorAll(".tab-chip").forEach(tab => tab.classList.remove("active"));
+    const activeTab = document.getElementById(`tab${algoKey.charAt(0).toUpperCase() + algoKey.slice(1).toLowerCase()}`);
+    if (activeTab) {
+        activeTab.classList.add("active");
+    }
+}
+
 // Main Dispatch: Executes Focused Route for Selected Algorithm
 async function dispatchEmergency() {
     const emergencyId = document.getElementById("emergencySelect").value;
     const algorithm = document.getElementById("dispatchAlgorithm").value;
+
+    syncAlgorithmTabs(algorithm);
 
     const statusBadge = document.getElementById("routeStatusBadge");
     statusBadge.className = "status-badge status-idle";
@@ -112,24 +262,24 @@ async function dispatchEmergency() {
         lastDispatchResult = data;
         currentBlockedRoads = data.blocked || [];
 
-        // 1. Render primary focused output (Active Algorithm Deep-Dive)
         renderFocusedAlgorithmOutput(data, algorithm);
-
-        // 2. Render separate benchmarking section (Comparative Study)
         renderBenchmarkTable(data.comparisons);
-
         updateBlockedRoadsUi();
 
         if (data.success) {
             currentRoutePath = data.path || [];
             statusBadge.className = "status-badge status-success";
             statusBadge.innerText = "Optimal Route Ready";
+            playSound("chime");
         } else {
             currentRoutePath = [];
             statusBadge.className = "status-badge status-danger";
             statusBadge.innerText = "No Route Available";
+            playSound("warning");
+            showToast("Navigation Alert: No accessible corridor found!", "danger");
         }
 
+        resetSimulation();
         renderNetworkSvg();
     } catch (err) {
         console.error("Dispatch error:", err);
@@ -144,7 +294,6 @@ function renderFocusedAlgorithmOutput(data, selectedAlgo) {
     const em = data.emergency || {};
     const v = data.vehicle || {};
 
-    // 1. Mission Header & Metrics
     const heading = document.getElementById("activeRouteHeading");
     heading.innerText = `${em.type || 'Emergency'} → ${formatName(em.target_hospital || 'Aster_Medcity')}`;
 
@@ -173,7 +322,7 @@ function renderFocusedAlgorithmOutput(data, selectedAlgo) {
         metricOptimality.className = "metric-val" ;
     }
 
-    // 2. Visual Corridor Highway Progression Path
+    // Visual Corridor Highway Progression Path
     const corridorWrapper = document.getElementById("corridorPathWrapper");
     if (data.success && data.path && data.path.length > 0) {
         let corridorHtml = "";
@@ -192,7 +341,7 @@ function renderFocusedAlgorithmOutput(data, selectedAlgo) {
                 icon = "🏥 ";
             }
 
-            corridorHtml += `<div class="${chipClass}">${icon}${formatName(node)}</div>`;
+            corridorHtml += `<div class="${chipClass}" id="chipNode-${i}">${icon}${formatName(node)}</div>`;
 
             if (!isLast) {
                 const segCost = getRoadSegmentCost(node, data.path[i + 1]);
@@ -209,7 +358,7 @@ function renderFocusedAlgorithmOutput(data, selectedAlgo) {
         corridorWrapper.innerHTML = `<span style="color: #dc2626; font-size: 13px; font-weight: 600;">No clear path to destination hospital. Corridors obstructed.</span>`;
     }
 
-    // 3. Turn-by-Turn Maneuvers (Step 8 Action Plan)
+    // Turn-by-Turn Maneuvers (Step 8 Action Plan)
     const actionPlanTimeline = document.getElementById("actionPlanTimeline");
     const actionsSection = document.getElementById("actionsSection");
 
@@ -218,7 +367,7 @@ function renderFocusedAlgorithmOutput(data, selectedAlgo) {
         actionPlanTimeline.innerHTML = data.actions.map((act, i) => {
             const segCost = getRoadSegmentCost(act.from, act.to);
             return `
-                <div class="action-step-item">
+                <div class="action-step-item" id="actionStep-${i}">
                     <div class="action-step-main">
                         <span class="step-badge">Stage ${i + 1}</span>
                         <span>Proceed via highway from <b>${formatName(act.from)}</b> to <b>${formatName(act.to)}</b></span>
@@ -231,7 +380,7 @@ function renderFocusedAlgorithmOutput(data, selectedAlgo) {
         actionsSection.style.display = "none";
     }
 
-    // 4. Vehicle Assignment (CSP) Box
+    // Vehicle Assignment (CSP) Box
     const cspOutput = document.getElementById("cspOutput");
     if (data.vehicle) {
         cspOutput.innerHTML = `
@@ -253,7 +402,7 @@ function renderFocusedAlgorithmOutput(data, selectedAlgo) {
         cspOutput.innerHTML = `<span style="color: #dc2626;">No vehicle satisfied equipment requirements.</span>`;
     }
 
-    // 5. Knowledge Base & Rule Deductions Box
+    // Knowledge Base & Rule Deductions Box
     const kbOutput = document.getElementById("kbOutput");
     if (data.facts && data.facts.length > 0) {
         const pills = data.facts.map(fact => {
@@ -269,7 +418,7 @@ function renderFocusedAlgorithmOutput(data, selectedAlgo) {
         kbOutput.innerHTML = `<span class="placeholder-text">No active inferences</span>`;
     }
 
-    // 6. Selected Algorithm Deep-Dive Box
+    // Selected Algorithm Deep-Dive Box
     const algoHeading = document.getElementById("activeAlgoHeading");
     const algoBadge = document.getElementById("activeAlgoParadigmBadge");
     const algoCriteriaBox = document.getElementById("algoCriteriaBox");
@@ -297,6 +446,98 @@ function renderFocusedAlgorithmOutput(data, selectedAlgo) {
             <div style="margin-top: 6px;"><b>Operational Rationale:</b> ${meta.operational_focus || ''}</div>
         </div>
     `;
+}
+
+// Interactive Live Simulation: Moves ambulance step-by-step
+function toggleSimulation() {
+    if (!currentRoutePath || currentRoutePath.length === 0) {
+        showToast("Cannot simulate: No valid route generated.", "warning");
+        return;
+    }
+
+    if (isSimulating) {
+        pauseSimulation();
+    } else {
+        startSimulation();
+    }
+}
+
+function startSimulation() {
+    isSimulating = true;
+    document.getElementById("simPlayIcon").innerText = "⏸";
+    document.getElementById("simPlayText").innerText = "Pause Journey";
+    showToast("Ambulance dispatched! En route to Aster Medcity...", "info");
+
+    const stepInterval = Math.round(1400 / simSpeed);
+    simTimer = setInterval(stepSimulation, stepInterval);
+}
+
+function pauseSimulation() {
+    isSimulating = false;
+    clearInterval(simTimer);
+    document.getElementById("simPlayIcon").innerText = "▶";
+    document.getElementById("simPlayText").innerText = "Resume Drive";
+}
+
+function resetSimulation() {
+    pauseSimulation();
+    simIndex = 0;
+    document.getElementById("simPlayIcon").innerText = "▶";
+    document.getElementById("simPlayText").innerText = "Drive Ambulance";
+    clearSimVisuals();
+    renderNetworkSvg();
+}
+
+function stepSimulation() {
+    if (simIndex >= currentRoutePath.length) {
+        pauseSimulation();
+        playSound("arrive");
+        showToast("🏥 Arrived at Aster Medcity Hospital! Patient admitted.", "success");
+        return;
+    }
+
+    const currentNode = currentRoutePath[simIndex];
+    highlightSimStep(simIndex, currentNode);
+    playSound("click");
+    simIndex++;
+}
+
+function highlightSimStep(index, node) {
+    // 1. Highlight corridor chips
+    document.querySelectorAll(".node-chip").forEach((chip, i) => {
+        if (i === index) {
+            chip.style.transform = "scale(1.1)";
+            chip.style.boxShadow = "0 0 0 3px #2563eb";
+        } else {
+            chip.style.transform = "scale(1)";
+            chip.style.boxShadow = "none";
+        }
+    });
+
+    // 2. Highlight turn-by-turn action list
+    document.querySelectorAll(".action-step-item").forEach((item, i) => {
+        if (i === index - 1) {
+            item.style.background = "#eff6ff";
+            item.style.borderColor = "#bfdbfe";
+        } else {
+            item.style.background = "var(--bg-surface-subtle)";
+            item.style.borderColor = "var(--border-light)";
+        }
+    });
+
+    // 3. Update SVG ambulance position
+    renderNetworkSvg(node);
+}
+
+function clearSimVisuals() {
+    document.querySelectorAll(".node-chip").forEach(chip => {
+        chip.style.transform = "scale(1)";
+        chip.style.boxShadow = "none";
+    });
+    document.querySelectorAll(".action-step-item").forEach(item => {
+        item.style.background = "var(--bg-surface-subtle)";
+        item.style.borderColor = "var(--border-light)";
+    });
 }
 
 // Render Benchmark Comparison in the Separate Section
@@ -352,6 +593,8 @@ function renderBenchmarkTable(comparisons) {
 
 // Re-run benchmark explicitly
 async function runComparativeAnalysis() {
+    playSound("click");
+    showToast("Re-evaluating all 6 search algorithms...", "info");
     await dispatchEmergency();
 }
 
@@ -363,7 +606,7 @@ async function toggleBlockSelectedRoad(isBlock) {
 }
 
 // Perform road toggle via API
-async function performRoadToggle(source, destination, isBlock) {
+async function performRoadToggle(source, destination, isBlock, shouldNotify = true) {
     const endpoint = isBlock ? "/api/block" : "/api/unblock";
     try {
         const res = await fetch(endpoint, {
@@ -374,6 +617,12 @@ async function performRoadToggle(source, destination, isBlock) {
         const data = await res.json();
         currentBlockedRoads = data.blocked || [];
         updateBlockedRoadsUi();
+
+        if (shouldNotify) {
+            playSound(isBlock ? "warning" : "click");
+            showToast(isBlock ? `🚧 Blocked: ${formatName(source)} ⟷ ${formatName(destination)}` : `🟢 Opened: ${formatName(source)} ⟷ ${formatName(destination)}`, isBlock ? "warning" : "success");
+        }
+
         // Dynamic re-routing (Step 9)
         await dispatchEmergency();
     } catch (err) {
@@ -382,12 +631,17 @@ async function performRoadToggle(source, destination, isBlock) {
 }
 
 // Clear all roadblocks
-async function clearAllBlocks() {
+async function clearAllBlocks(shouldNotify = true) {
     try {
         const res = await fetch("/api/clear_blocks", { method: "POST" });
         const data = await res.json();
         currentBlockedRoads = data.blocked || [];
         updateBlockedRoadsUi();
+
+        if (shouldNotify) {
+            playSound("click");
+            showToast("All road blockades cleared! Corridors open.", "success");
+        }
         await dispatchEmergency();
     } catch (err) {
         console.error("Error clearing roadblocks:", err);
@@ -450,7 +704,7 @@ function projectCoord(node) {
 }
 
 // Render Interactive SVG Road Network Map
-function renderNetworkSvg() {
+function renderNetworkSvg(activeSimNode = null) {
     const svg = document.getElementById("networkSvg");
     if (!svg || !networkData.roads) return;
 
@@ -492,13 +746,18 @@ function renderNetworkSvg() {
         const midX = (p1.x + p2.x) / 2;
         const midY = (p1.y + p2.y) / 2;
 
+        const roadTitle = `${formatName(road.source)} ⟷ ${formatName(road.destination)}: ${road.cost} km (${blocked ? 'Blocked' : 'Open'})`;
+
         svgHtml += `
-            <g class="road-group" style="cursor: pointer;" onclick="performRoadToggle('${road.source}', '${road.destination}', ${!blocked})">
+            <g class="road-group" style="cursor: pointer;" 
+               onmouseenter="showMapTooltip(event, '${roadTitle}')"
+               onmouseleave="hideMapTooltip()"
+               onclick="performRoadToggle('${road.source}', '${road.destination}', ${!blocked})">
                 <line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" 
                       stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-dasharray="${strokeDash}" ${filterAttr} />
                 <!-- Click hit target -->
                 <line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" 
-                      stroke="transparent" stroke-width="16" />
+                      stroke="transparent" stroke-width="18" />
                 <!-- Distance cost badge -->
                 <circle cx="${midX}" cy="${midY}" r="12" fill="#ffffff" stroke="${blocked ? '#dc2626' : (onRoute ? '#2563eb' : '#cbd5e1')}" stroke-width="1.5" />
                 <text x="${midX}" y="${midY + 4}" fill="${blocked ? '#dc2626' : (onRoute ? '#1d4ed8' : '#475569')}" 
@@ -514,6 +773,7 @@ function renderNetworkSvg() {
         const isHospital = node.includes("Hospital") || node.includes("Medcity");
         const isEmergency = node.includes("Infopark") || node.includes("Emergency");
         const onRoute = currentRoutePath.includes(node);
+        const isCurrentSim = (activeSimNode === node);
 
         let fillColor = "#ffffff";
         let strokeColor = "#64748b";
@@ -539,14 +799,25 @@ function renderNetworkSvg() {
             radius = 17;
         }
 
+        if (isCurrentSim) {
+            fillColor = "#2563eb";
+            strokeColor = "#1d4ed8";
+            radius = 22;
+            icon = "🚑";
+            pulseRing = `<circle cx="${p.x}" cy="${p.y}" r="28" fill="none" stroke="#2563eb" stroke-width="3" style="animation: pulseRadar 1s ease-out infinite;" />`;
+        }
+
         const displayLabel = formatName(node);
+        const tooltipText = `Junction: ${displayLabel}`;
 
         svgHtml += `
-            <g class="node-group" style="transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+            <g class="node-group" style="transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer;"
+               onmouseenter="showMapTooltip(event, '${tooltipText}')"
+               onmouseleave="hideMapTooltip()">
                 ${pulseRing}
                 <circle cx="${p.x}" cy="${p.y}" r="${radius}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2.5" />
                 ${icon ? `
-                    <text x="${p.x}" y="${p.y + 6}" font-size="15" text-anchor="middle">${icon}</text>
+                    <text x="${p.x}" y="${p.y + 6}" font-size="${isCurrentSim ? 18 : 15}" text-anchor="middle">${icon}</text>
                 ` : `
                     <circle cx="${p.x}" cy="${p.y}" r="4" fill="${onRoute ? '#2563eb' : '#64748b'}" />
                 `}
@@ -557,6 +828,29 @@ function renderNetworkSvg() {
         `;
     });
 
-
     svg.innerHTML = svgHtml;
+}
+
+// Floating Tooltip Handlers
+function showMapTooltip(e, text) {
+    const tooltip = document.getElementById("mapTooltip");
+    if (!tooltip) return;
+
+    const wrapper = document.querySelector(".svg-map-wrapper");
+    const rect = wrapper.getBoundingClientRect();
+
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    tooltip.innerText = text;
+    tooltip.style.left = `${x}px`;
+    tooltip.style.top = `${y}px`;
+    tooltip.style.display = "block";
+}
+
+function hideMapTooltip() {
+    const tooltip = document.getElementById("mapTooltip");
+    if (tooltip) {
+        tooltip.style.display = "none";
+    }
 }

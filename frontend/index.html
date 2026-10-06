@@ -35,15 +35,25 @@
             </div>
         </header>
 
-        <!-- Top Mission Control Ribbon (Spacious & Clean) -->
+        <!-- Top Mission Control Ribbon (Interactive Scenario Bar & Controls) -->
         <section class="mission-ribbon card">
-            <div class="ribbon-header">
-                <div class="ribbon-title">
-                    <span class="step-num">1</span>
-                    <div>
-                        <h2>Emergency Dispatch & Algorithm Selection</h2>
-                        <p class="ribbon-desc">Configure the active incident and choose a state-space search algorithm to compute the navigation route.</p>
-                    </div>
+            
+            <!-- Quick Preset Scenarios (One-Click Testing) -->
+            <div class="preset-scenarios-strip">
+                <span class="preset-label">⚡ Quick Scenarios:</span>
+                <div class="preset-buttons-group">
+                    <button class="preset-btn active" id="presetCardiac" onclick="loadScenario('cardiac')">
+                        🚨 Cardiac Emergency (Infopark)
+                    </button>
+                    <button class="preset-btn" id="presetAccident" onclick="loadScenario('accident')">
+                        💥 Seaport Road Crash
+                    </button>
+                    <button class="preset-btn" id="presetFire" onclick="loadScenario('fire')">
+                        🔥 Industrial Fire
+                    </button>
+                    <button class="preset-btn" id="presetBlock" onclick="loadScenario('blocked_corridor')">
+                        🚧 Test Edappally Blockade
+                    </button>
                 </div>
             </div>
 
@@ -100,6 +110,18 @@
                         <span id="routeStatusBadge" class="status-badge status-success">Route Ready</span>
                     </div>
 
+                    <!-- Interactive Algorithm Quick-Tabs (Switch algorithms with 1-click) -->
+                    <div class="algo-quick-tabs">
+                        <span class="tabs-label">Switch Strategy:</span>
+                        <div class="tabs-list">
+                            <button class="tab-chip active" id="tabAstar" onclick="switchAlgorithmTab('astar')">A* Search</button>
+                            <button class="tab-chip" id="tabGreedy" onclick="switchAlgorithmTab('greedy')">Greedy</button>
+                            <button class="tab-chip" id="tabBfs" onclick="switchAlgorithmTab('bfs')">BFS</button>
+                            <button class="tab-chip" id="tabIddfs" onclick="switchAlgorithmTab('iddfs')">IDDFS</button>
+                            <button class="tab-chip" id="tabDfs" onclick="switchAlgorithmTab('dfs')">DFS</button>
+                        </div>
+                    </div>
+
                     <!-- Key Metrics Grid (Spacious stat cards) -->
                     <div class="metrics-grid" id="metricsGrid">
                         <div class="metric-card">
@@ -126,7 +148,17 @@
 
                     <!-- Visual Corridor Progression Route -->
                     <div class="corridor-flow-box">
-                        <div class="corridor-title">Corridor Highway Traversal:</div>
+                        <div class="corridor-header-row">
+                            <div class="corridor-title">Corridor Highway Traversal:</div>
+                            <div class="sim-speed-wrapper">
+                                <span style="font-size: 11px; color: var(--text-tertiary); font-weight: 700;">LIVE SIMULATION:</span>
+                                <button id="simPlayBtn" class="btn btn-secondary btn-sm" onclick="toggleSimulation()">
+                                    <span id="simPlayIcon">▶</span> <span id="simPlayText">Drive Ambulance</span>
+                                </button>
+                                <button class="btn btn-outline btn-sm btn-icon" onclick="resetSimulation()" title="Reset Journey">↺</button>
+                                <button id="audioToggleBtn" class="btn btn-outline btn-sm btn-icon" onclick="toggleAudio()" title="Toggle Sound">🔊</button>
+                            </div>
+                        </div>
                         <div class="corridor-path-wrapper" id="corridorPathWrapper">
                             <!-- Injected by script.js -->
                         </div>
@@ -191,6 +223,8 @@
                         <svg id="networkSvg" viewBox="0 0 850 420" preserveAspectRatio="xMidYMid meet">
                             <!-- Rendered dynamically by script.js -->
                         </svg>
+                        <!-- Floating Tooltip for Map Interaction -->
+                        <div id="mapTooltip" class="map-tooltip" style="display: none;"></div>
                     </div>
 
                     <!-- Integrated Road Traffic Controls -->
@@ -307,6 +341,9 @@
         <footer class="app-footer">
             <p>Kerala Emergency Route Planner • Intelligent Agent Navigation • Ernakulam Emergency Management System</p>
         </footer>
+
+        <!-- Toast Notifications Container -->
+        <div id="toastContainer" class="toast-container"></div>
 
     </div>
 
