@@ -484,8 +484,9 @@ function renderNetworkSvg() {
             strokeDash = "6,4";
         } else if (onRoute) {
             strokeColor = "#2563eb";
-            strokeWidth = 5;
-            filterAttr = 'filter="url(#glow-route)"';
+            strokeWidth = 5.5;
+            strokeDash = "10,6";
+            filterAttr = 'filter="url(#glow-route)" style="animation: flowDash 1.2s linear infinite;"';
         }
 
         const midX = (p1.x + p2.x) / 2;
@@ -518,17 +519,20 @@ function renderNetworkSvg() {
         let strokeColor = "#64748b";
         let radius = 16;
         let icon = "";
+        let pulseRing = "";
 
         if (isHospital) {
             fillColor = "#ecfdf5";
             strokeColor = "#059669";
             radius = 21;
             icon = "🏥";
+            pulseRing = `<circle cx="${p.x}" cy="${p.y}" r="21" fill="none" stroke="#10b981" stroke-width="2" style="animation: pulseRadar 2.5s ease-out infinite;" />`;
         } else if (isEmergency) {
             fillColor = "#fef2f2";
             strokeColor = "#dc2626";
             radius = 21;
             icon = "🚨";
+            pulseRing = `<circle cx="${p.x}" cy="${p.y}" r="21" fill="none" stroke="#ef4444" stroke-width="2" style="animation: pulseRadar 2s ease-out infinite;" />`;
         } else if (onRoute) {
             fillColor = "#eff6ff";
             strokeColor = "#2563eb";
@@ -538,7 +542,8 @@ function renderNetworkSvg() {
         const displayLabel = formatName(node);
 
         svgHtml += `
-            <g class="node-group">
+            <g class="node-group" style="transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+                ${pulseRing}
                 <circle cx="${p.x}" cy="${p.y}" r="${radius}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2.5" />
                 ${icon ? `
                     <text x="${p.x}" y="${p.y + 6}" font-size="15" text-anchor="middle">${icon}</text>
@@ -551,6 +556,7 @@ function renderNetworkSvg() {
             </g>
         `;
     });
+
 
     svg.innerHTML = svgHtml;
 }

@@ -8,8 +8,5 @@ if ROOT_DIR not in sys.path:
 
 from app import app
 
+# Vercel's Python runtime natively detects and executes this WSGI 'app' object
 app.debug = False
-
-# WSGI handler for Vercel Serverless Function
-def handler(request, response):
-    return app(request, response)
