@@ -19,3 +19,4 @@ def load_emergencies():
 
 def load_hospitals():
     return load_json("hospitals.json")
+

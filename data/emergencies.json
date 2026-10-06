@@ -1,27 +1,33 @@
 [
     {
-        "id": "E001",
-        "type": "Accident",
-        "priority": "HIGH",
-        "location": "Emergency",
-        "required_equipment": [
-            "First Aid"
-        ]
-    },
-    {
         "id": "E002",
         "type": "Cardiac Emergency",
+        "description": "Critical heart attack reported at Infopark Phase-1, Kakkanad",
         "priority": "CRITICAL",
-        "location": "Emergency",
+        "location": "Kakkanad_Infopark",
+        "target_hospital": "Aster_Medcity",
         "required_equipment": [
             "Cardiac"
         ]
     },
     {
-        "id": "E003",
-        "type": "Fire Rescue",
+        "id": "E001",
+        "type": "Seaport-Airport Road Accident",
+        "description": "Multi-vehicle collision near Kakkanad junction",
         "priority": "HIGH",
-        "location": "Emergency",
+        "location": "Kakkanad_Infopark",
+        "target_hospital": "Aster_Medcity",
+        "required_equipment": [
+            "First Aid"
+        ]
+    },
+    {
+        "id": "E003",
+        "type": "Commercial Fire Outbreak",
+        "description": "Fire hazard reported at Kakkanad tech facility",
+        "priority": "HIGH",
+        "location": "Kakkanad_Infopark",
+        "target_hospital": "Aster_Medcity",
         "required_equipment": [
             "Rescue"
         ]

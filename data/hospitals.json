@@ -1,8 +1,18 @@
 [
     {
         "id": "H001",
-        "name": "City General Hospital",
-        "location": "Hospital",
-        "emergency_services": true
+        "name": "Aster Medcity, Cheranallur",
+        "district": "Ernakulam, Kerala",
+        "location": "Aster_Medcity",
+        "emergency_services": true,
+        "specialties": ["Cardiology", "Trauma Care", "Neurology"]
+    },
+    {
+        "id": "H002",
+        "name": "Lisie Hospital, Kaloor",
+        "district": "Ernakulam, Kerala",
+        "location": "Kaloor",
+        "emergency_services": true,
+        "specialties": ["Cardiac Care", "Emergency"]
     }
 ]

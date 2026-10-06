@@ -1,8 +1,9 @@
 [
     {
-        "id": "AMB-01",
-        "type": "Ambulance",
-        "location": "Junction_A",
+        "id": "KL-07-AMB-108",
+        "name": "108 Emergency Ambulance (Kerala Govt)",
+        "type": "Basic Life Support (BLS)",
+        "location": "Palarivattom",
         "available": true,
         "equipment": [
             "First Aid",
@@ -10,9 +11,10 @@
         ]
     },
     {
-        "id": "AMB-02",
-        "type": "Advanced Ambulance",
-        "location": "Junction_C",
+        "id": "KL-07-ACLS-99",
+        "name": "Advanced Cardiac Life Support (ACLS)",
+        "type": "Advanced ICU Ambulance",
+        "location": "Edappally",
         "available": true,
         "equipment": [
             "First Aid",
@@ -21,9 +23,10 @@
         ]
     },
     {
-        "id": "RES-01",
-        "type": "Rescue Vehicle",
-        "location": "Junction_B",
+        "id": "KL-07-FIRE-101",
+        "name": "Kerala Fire & Rescue Force Unit",
+        "type": "Rescue Tender",
+        "location": "Kalamassery",
         "available": true,
         "equipment": [
             "Rescue",

@@ -1,62 +1,67 @@
 [
     {
-        "source": "Emergency",
-        "destination": "Junction_E",
+        "source": "Kakkanad_Infopark",
+        "destination": "Palarivattom",
         "cost": 4
     },
     {
-        "source": "Emergency",
-        "destination": "Junction_F",
-        "cost": 2
-    },
-    {
-        "source": "Junction_E",
-        "destination": "Junction_B",
-        "cost": 4
-    },
-    {
-        "source": "Junction_E",
-        "destination": "Junction_D",
-        "cost": 3
-    },
-    {
-        "source": "Junction_F",
-        "destination": "Junction_B",
+        "source": "Kakkanad_Infopark",
+        "destination": "Kalamassery",
         "cost": 6
     },
     {
-        "source": "Junction_F",
-        "destination": "Junction_C",
-        "cost": 3
-    },
-    {
-        "source": "Junction_B",
-        "destination": "Junction_A",
-        "cost": 3
-    },
-    {
-        "source": "Junction_C",
-        "destination": "Junction_A",
+        "source": "Kakkanad_Infopark",
+        "destination": "Vyttila_Hub",
         "cost": 5
     },
     {
-        "source": "Junction_C",
-        "destination": "Junction_D",
-        "cost": 2
+        "source": "Palarivattom",
+        "destination": "Edappally",
+        "cost": 3
     },
     {
-        "source": "Junction_D",
-        "destination": "Junction_A",
-        "cost": 5
+        "source": "Palarivattom",
+        "destination": "Kaloor",
+        "cost": 3
     },
     {
-        "source": "Junction_A",
-        "destination": "Hospital",
+        "source": "Vyttila_Hub",
+        "destination": "Palarivattom",
         "cost": 4
     },
     {
-        "source": "Junction_C",
-        "destination": "Hospital",
+        "source": "Vyttila_Hub",
+        "destination": "Kaloor",
+        "cost": 5
+    },
+    {
+        "source": "Kalamassery",
+        "destination": "Edappally",
+        "cost": 4
+    },
+    {
+        "source": "Edappally",
+        "destination": "Cheranallur",
+        "cost": 3
+    },
+    {
+        "source": "Edappally",
+        "destination": "Aster_Medcity",
+        "cost": 5
+    },
+    {
+        "source": "Cheranallur",
+        "destination": "Aster_Medcity",
+        "cost": 2
+    },
+    {
+        "source": "Kaloor",
+        "destination": "Edappally",
+        "cost": 3
+    },
+    {
+        "source": "Kaloor",
+        "destination": "Cheranallur",
         "cost": 6
     }
 ]

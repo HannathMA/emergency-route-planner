@@ -1,33 +1,17 @@
 import math
 
-
 COORDINATES = {
-
-    "Hospital": (0, 0),
-
-    "Junction_A": (2, 2),
-
-    "Junction_B": (5, 4),
-
-    "Junction_C": (3, -2),
-
-    "Junction_D": (5, 0),
-
-    "Junction_E": (8, 2),
-
-    "Junction_F": (7, -2),
-
-    "Emergency": (10, 0)
+    "Aster_Medcity": (0, 0),
+    "Cheranallur": (2, 1),
+    "Edappally": (3, -1),
+    "Kalamassery": (5, 3),
+    "Palarivattom": (5, -1),
+    "Kaloor": (3, -3),
+    "Vyttila_Hub": (7, -3),
+    "Kakkanad_Infopark": (9, -1)
 }
 
-
 def heuristic(node, goal):
-
     x1, y1 = COORDINATES[node]
-
     x2, y2 = COORDINATES[goal]
-
-    return math.sqrt(
-        (x1 - x2) ** 2 +
-        (y1 - y2) ** 2
-    )
+    return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)

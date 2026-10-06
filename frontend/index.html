@@ -3,120 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Emergency Vehicle Route Planner</title>
+    <title>Kerala Emergency Route Planner | AI Navigation</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <div class="app-layout">
+        
         <!-- Header -->
         <header class="app-header">
             <div class="header-content">
                 <div class="brand">
                     <div class="brand-icon">🚑</div>
                     <div>
-                        <h1>Emergency Route Planner</h1>
-                        <p class="subtitle">AI-Powered Intelligent Dispatch & Adaptive State-Space Navigation</p>
+                        <h1>Kerala Emergency Route Planner</h1>
+                        <p class="subtitle">AI-Powered Hospital Dispatch & Adaptive Route Planning • Ernakulam District, Kochi</p>
                     </div>
                 </div>
-                <div class="status-indicator">
-                    <span class="live-dot"></span>
-                    <span id="systemStatusText">System Active & Ready</span>
+                <div class="header-badges">
+                    <span class="region-badge">📍 Kochi, Kerala</span>
+                    <div class="status-indicator">
+                        <span class="live-dot"></span>
+                        <span id="systemStatusText">Control Room Online</span>
+                    </div>
                 </div>
             </div>
         </header>
 
-        <!-- Main Content Grid -->
+        <!-- Main Workspace Grid -->
         <main class="dashboard-grid">
             
-            <!-- Left Column: Operations & Dispatch -->
+            <!-- Left Panel: Incident Dispatch & Control -->
             <section class="left-panel">
                 
-                <!-- Card 1: Emergency Dispatch Center -->
-                <div class="card dispatch-card">
+                <!-- Card 1: Emergency Incident & Target Hospital -->
+                <div class="card">
                     <div class="card-header">
-                        <h2>🚨 Emergency Dispatch Center</h2>
-                        <span class="badge badge-accent">Step 1 & 2</span>
+                        <h2>🚨 Emergency Incident Setup</h2>
+                        <span class="badge badge-accent">Step 1: Incident</span>
                     </div>
-                    <p class="card-desc">Select an active emergency event to trigger vehicle allocation via Constraint Satisfaction (CSP) and A* navigation.</p>
+                    <p class="card-desc">Select an incident reported across Kochi's IT corridors and highways to dispatch the appropriate emergency response.</p>
 
-                    <div class="emergency-selector">
-                        <label for="emergencySelect">Active Incident:</label>
+                    <div class="form-group">
+                        <label for="emergencySelect">Active Emergency Incident:</label>
                         <select id="emergencySelect" onchange="onEmergencyChange()">
                             {% for em in emergencies %}
                             <option value="{{ em.id }}" {% if em.id == 'E002' %}selected{% endif %}>
-                                {{ em.type }} ({{ em.priority }}) — At {{ em.location }}
+                                {{ em.type }} ({{ em.priority }}) — {{ em.location | replace('_', ' ') }}
                             </option>
                             {% endfor %}
                         </select>
                     </div>
 
+                    <!-- Dynamic Incident Details -->
                     <div id="emergencyDetailsBox" class="meta-box">
                         <!-- Populated by JS -->
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group flex-1">
-                            <label for="dispatchAlgorithm">Route Algorithm:</label>
-                            <select id="dispatchAlgorithm">
-                                <option value="astar" selected>A* Heuristic Search (Optimal)</option>
-                                <option value="greedy">Greedy Best-First</option>
-                                <option value="bfs">Breadth-First Search (BFS)</option>
-                                <option value="dfs">Depth-First Search (DFS)</option>
-                                <option value="iddfs">Iterative Deepening (IDDFS)</option>
-                                <option value="dls">Depth-Limited Search (DLS)</option>
-                            </select>
-                        </div>
+                    <!-- Algorithm Selection with Direct Focus -->
+                    <div class="form-group" style="margin-top: 14px;">
+                        <label for="dispatchAlgorithm">Search Algorithm to Evaluate:</label>
+                        <select id="dispatchAlgorithm" onchange="dispatchEmergency()">
+                            <option value="astar" selected>A* Heuristic Search (Optimal f = g + h)</option>
+                            <option value="greedy">Greedy Best-First Search (Heuristic f = h)</option>
+                            <option value="bfs">Breadth-First Search (BFS - Fewest Junction Hops)</option>
+                            <option value="dfs">Depth-First Search (DFS - Deep Branch Exploration)</option>
+                            <option value="iddfs">Iterative Deepening DFS (IDDFS - Optimal Memory)</option>
+                            <option value="dls">Depth-Limited Search (DLS - Bound = 5 Hops)</option>
+                        </select>
                     </div>
 
                     <div class="button-group">
                         <button class="btn btn-primary" onclick="dispatchEmergency()">
-                            ⚡ Dispatch Vehicle & Calculate Route
+                            ⚡ Dispatch Vehicle & Compute Route
                         </button>
                     </div>
                 </div>
 
-                <!-- Card 2: Knowledge Base & CSP Inference -->
-                <div class="card intelligence-card">
+                <!-- Card 2: Constraint Satisfaction & Knowledge Base -->
+                <div class="card">
                     <div class="card-header">
-                        <h2>🧠 AI Knowledge Base & Reasoning</h2>
+                        <h2>🧠 Intelligent Agent Reasoning</h2>
                         <span class="badge badge-purple">Steps 2 & 7</span>
                     </div>
 
                     <div class="intel-split">
                         <div class="intel-col">
-                            <h4>Constraint Satisfaction (CSP)</h4>
+                            <h4>Vehicle Assignment (CSP)</h4>
                             <div id="cspOutput" class="intel-box">
-                                <span class="placeholder-text">Run dispatch to inspect CSP vehicle matching</span>
+                                <span class="placeholder-text">Awaiting dispatch...</span>
                             </div>
                         </div>
 
                         <div class="intel-col">
-                            <h4>Forward Chaining Rule Engine</h4>
+                            <h4>Rule Engine (Forward Chaining)</h4>
                             <div id="kbOutput" class="intel-box">
-                                <span class="placeholder-text">Rule deductions will appear here</span>
+                                <span class="placeholder-text">Evaluating rules...</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Card 3: Dynamic Road Network Obstacles -->
-                <div class="card road-control-card">
+                <!-- Card 3: Dynamic Road Obstacle Simulator -->
+                <div class="card">
                     <div class="card-header">
-                        <h2>🚧 Dynamic Road Network Control</h2>
+                        <h2>🚧 Dynamic Traffic & Road Blocks</h2>
                         <span class="badge badge-warning">Step 4 & 9</span>
                     </div>
-                    <p class="card-desc">Simulate traffic blocks or hazards to witness real-time AI dynamic re-routing.</p>
+                    <p class="card-desc">Simulate waterlogging, metro construction, or traffic blockades on Kochi roads to test dynamic re-routing.</p>
 
                     <div class="road-actions-row">
                         <div class="form-group flex-1">
-                            <label for="blockRoadSelect">Road Segment:</label>
+                            <label for="blockRoadSelect">Select Road Segment:</label>
                             <select id="blockRoadSelect">
                                 {% for road in roads %}
                                 <option value="{{ road.source }}|{{ road.destination }}">
-                                    {{ road.source }} ⟷ {{ road.destination }} (Cost: {{ road.cost }})
+                                    {{ road.source | replace('_', ' ') }} ⟷ {{ road.destination | replace('_', ' ') }} ({{ road.cost }} km)
                                 </option>
                                 {% endfor %}
                             </select>
@@ -128,33 +132,33 @@
                             <button class="btn btn-secondary" onclick="toggleBlockSelectedRoad(false)">
                                 🟢 Open Road
                             </button>
-                            <button class="btn btn-outline" onclick="clearAllBlocks()" title="Clear all roadblocks">
-                                ↺ Reset All
+                            <button class="btn btn-outline" onclick="clearAllBlocks()" title="Reset all obstacles">
+                                ↺ Reset
                             </button>
                         </div>
                     </div>
 
                     <div class="active-blocks-wrapper">
-                        <h4>Currently Blocked Segments:</h4>
+                        <h4>Currently Blocked Kochi Roads:</h4>
                         <div id="blockedRoadsList" class="tags-container">
-                            <span class="tag tag-empty">No blocked roads (All roads clear)</span>
+                            <span class="tag tag-empty">No roadblocks (All corridors free)</span>
                         </div>
                     </div>
                 </div>
 
             </section>
 
-            <!-- Right Column: Visualizer, Plan & Analysis -->
+            <!-- Right Panel: Algorithm Deep-Dive & Visual Map -->
             <section class="right-panel">
                 
-                <!-- Card 4: Interactive Network Visualizer Map -->
-                <div class="card visualizer-card">
+                <!-- Card 4: Interactive Kochi Road Network Map -->
+                <div class="card">
                     <div class="card-header">
-                        <h2>🗺️ Live State-Space Road Network</h2>
+                        <h2>🗺️ Kochi Road Network Map & Corridor Flow</h2>
                         <div class="map-legend">
                             <span class="legend-item"><span class="dot dot-emergency"></span> Incident</span>
                             <span class="legend-item"><span class="dot dot-hospital"></span> Hospital</span>
-                            <span class="legend-item"><span class="dot dot-route"></span> Active Path</span>
+                            <span class="legend-item"><span class="dot dot-route"></span> Route</span>
                             <span class="legend-item"><span class="dot dot-blocked"></span> Blocked</span>
                         </div>
                     </div>
@@ -164,60 +168,36 @@
                         </svg>
                     </div>
                     <div class="canvas-footnote">
-                        <span>💡 Tip: Click any road line or junction on the map to toggle road obstruction!</span>
+                        <span>💡 Tip: Click any road or junction directly on the map to toggle traffic blockades!</span>
                     </div>
                 </div>
 
-                <!-- Card 5: Result Card (Exact Expected Output) -->
+                <!-- Card 5: Selected Algorithm Dedicated Execution & Criteria (PRIMARY FOCUS) -->
                 <div class="card result-card" id="resultCard">
                     <div class="card-header">
-                        <h2>📋 Mission Result & Route Execution</h2>
-                        <span id="routeStatusBadge" class="status-badge status-idle">Awaiting Dispatch</span>
+                        <div class="algo-header-title">
+                            <h2 id="activeAlgoHeading">🎯 Algorithm Deep Dive: A* Heuristic Search</h2>
+                            <p class="algo-subtext" id="activeAlgoCategory">Informed Search • Admissible Euclidean Metric</p>
+                        </div>
+                        <span id="routeStatusBadge" class="status-badge status-success">Route Generated</span>
                     </div>
 
+                    <!-- Algorithm Evaluation Criteria & Working Principle (Specific to Selected Algorithm) -->
+                    <div class="algo-criteria-box" id="algoCriteriaBox">
+                        <!-- Populated by JS with specific formula, metrics, and rationale -->
+                    </div>
+
+                    <!-- Clean Structured Route Result -->
                     <div id="formattedResultBox" class="formatted-result-box">
-                        <div class="placeholder-result">
-                            <p>Click <b>"Dispatch Vehicle & Calculate Route"</b> to plan the emergency journey.</p>
-                        </div>
+                        <!-- Populated by JS -->
                     </div>
 
                     <!-- Step 8: Action Sequence -->
-                    <div class="planning-actions-section" id="actionsSection" style="display: none;">
-                        <h3>🚦 Step 8: Generated Action Plan (Sequence)</h3>
+                    <div class="planning-actions-section" id="actionsSection">
+                        <h3>🚦 Step 8: Generated Action Plan (Execution Sequence)</h3>
                         <div id="actionPlanTimeline" class="actions-timeline">
                             <!-- Injected by JS -->
                         </div>
-                    </div>
-                </div>
-
-                <!-- Card 6: Algorithm Benchmark Comparison -->
-                <div class="card comparison-card">
-                    <div class="card-header">
-                        <h2>📊 Search Algorithm Performance Comparison</h2>
-                        <button class="btn btn-sm btn-outline" onclick="runComparativeAnalysis()">
-                            🔄 Re-run All 6 Algorithms
-                        </button>
-                    </div>
-                    <p class="card-desc">Comparative analysis across Uninformed (BFS, DFS, DLS, IDDFS) and Informed (Greedy, A*) search algorithms.</p>
-                    
-                    <div class="table-responsive">
-                        <table class="benchmark-table" id="benchmarkTable">
-                            <thead>
-                                <tr>
-                                    <th>Algorithm</th>
-                                    <th>Type</th>
-                                    <th>Calculated Route</th>
-                                    <th>Total Cost</th>
-                                    <th>Nodes Expanded</th>
-                                    <th>Optimality</th>
-                                </tr>
-                            </thead>
-                            <tbody id="benchmarkTbody">
-                                <tr>
-                                    <td colspan="6" class="text-center text-muted">Run dispatch to benchmark algorithms</td>
-                                </tr>
-                            </tbody>
-                        </table>
                     </div>
                 </div>
 
@@ -225,12 +205,60 @@
 
         </main>
 
+        <!-- Dedicated Section: Multi-Algorithm Comparison & Benchmark Study (SEPARATE SECTION) -->
+        <section class="benchmark-section">
+            <div class="card comparison-card">
+                <div class="card-header">
+                    <div>
+                        <h2>📊 Multi-Algorithm Benchmark & Comparative Study</h2>
+                        <p class="card-desc" style="margin-bottom: 0;">Comprehensive empirical evaluation across Uninformed (BFS, DFS, DLS, IDDFS) and Informed (Greedy, A*) state-space search strategies.</p>
+                    </div>
+                    <button class="btn btn-sm btn-outline" onclick="runComparativeAnalysis()">
+                        🔄 Re-benchmark All 6 Algorithms
+                    </button>
+                </div>
+
+                <div class="table-responsive" style="margin-top: 14px;">
+                    <table class="benchmark-table" id="benchmarkTable">
+                        <thead>
+                            <tr>
+                                <th>Algorithm</th>
+                                <th>Paradigm</th>
+                                <th>Evaluation Function</th>
+                                <th>Calculated Route</th>
+                                <th>Total Distance</th>
+                                <th>Nodes Expanded</th>
+                                <th>Optimality Assessment</th>
+                            </tr>
+                        </thead>
+                        <tbody id="benchmarkTbody">
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">Run dispatch to benchmark algorithms</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Benchmarking Conclusion & Insights -->
+                <div class="benchmark-conclusion-box">
+                    <h4>💡 Algorithmic Insights & Conclusion:</h4>
+                    <ul>
+                        <li><b>A* Search</b> guarantees the shortest path (12 km) by balancing actual road cost with straight-line Euclidean distance to Aster Medcity.</li>
+                        <li><b>Greedy Best-First Search</b> operates quickly using only straight-line distance, but can pick suboptimal detours if road weights vary.</li>
+                        <li><b>Breadth-First Search (BFS)</b> guarantees the fewest junction crossings, but does not consider road kilometer distances.</li>
+                        <li><b>Depth-First Search (DFS)</b> uses minimal memory but can explore lengthy peripheral detours before reaching the hospital.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
         <footer class="app-footer">
-            <p>Emergency Route Planner • State Space Search, Constraint Satisfaction & Knowledge Engineering</p>
+            <p>Kerala Emergency Route Planner • Intelligent Agent Navigation • Artificial Intelligence State Space Search Project</p>
         </footer>
     </div>
 
-    <!-- Data Injection for Client Script -->
+    <!-- Inject initial data -->
     <script>
         window.INITIAL_DATA = {
             roads: {{ roads | tojson }},

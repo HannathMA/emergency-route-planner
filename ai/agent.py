@@ -12,6 +12,82 @@ from knowledge.rules import RULES
 from knowledge.inference import forward_chaining
 
 
+ALGORITHM_METADATA = {
+    "astar": {
+        "name": "A* Heuristic Search",
+        "badge": "A*",
+        "category": "Informed (Heuristic) Search",
+        "evaluation_fn": "f(n) = g(n) + h(n)",
+        "optimality": "Guaranteed Optimal (Lowest Total Distance Cost)",
+        "completeness": "Complete",
+        "time_complexity": "O(b^d)",
+        "space_complexity": "O(b^d)",
+        "criteria": "Evaluates both cumulative road distance traveled g(n) and admissible straight-line Euclidean distance h(n) to the hospital. Guarantees the absolute lowest travel cost.",
+        "operational_focus": "Primary emergency dispatch algorithm. Mathematically guarantees the fastest arrival to Aster Medcity."
+    },
+    "greedy": {
+        "name": "Greedy Best-First Search",
+        "badge": "Greedy",
+        "category": "Informed (Heuristic) Search",
+        "evaluation_fn": "f(n) = h(n)",
+        "optimality": "Not Guaranteed (Vulnerable to local detours)",
+        "completeness": "Complete in finite spaces",
+        "time_complexity": "O(b^m)",
+        "space_complexity": "O(b^m)",
+        "criteria": "Picks junctions solely based on which junction looks geographically closest to the hospital (straight-line distance), ignoring previous road cost.",
+        "operational_focus": "Fastest computation time, but may choose longer roads if they head directly toward the hospital."
+    },
+    "bfs": {
+        "name": "Breadth-First Search (BFS)",
+        "badge": "BFS",
+        "category": "Uninformed (Blind) Search",
+        "evaluation_fn": "Queue / FIFO (Level-by-Level Expansion)",
+        "optimality": "Optimal for Step Count (Fewest Junction Hops)",
+        "completeness": "Complete",
+        "time_complexity": "O(b^d)",
+        "space_complexity": "O(b^d)",
+        "criteria": "Expands all neighboring junctions before going deeper. Guarantees the path with the minimum number of traffic junctions crossed.",
+        "operational_focus": "Ideal when minimizing junction traffic lights and complex turns rather than road distance."
+    },
+    "dfs": {
+        "name": "Depth-First Search (DFS)",
+        "badge": "DFS",
+        "category": "Uninformed (Blind) Search",
+        "evaluation_fn": "Stack / LIFO (Deepest Branch First)",
+        "optimality": "Not Guaranteed (Often Suboptimal)",
+        "completeness": "Complete in finite networks",
+        "time_complexity": "O(b^m)",
+        "space_complexity": "O(b * m)",
+        "criteria": "Follows a single road branch until it hits a dead end or reaches the hospital, only backtracking when blocked.",
+        "operational_focus": "Extremely memory efficient, but often results in major detours through peripheral highways."
+    },
+    "dls": {
+        "name": "Depth-Limited Search (DLS)",
+        "badge": "DLS",
+        "category": "Uninformed (Blind) Search",
+        "evaluation_fn": "Recursive Bound (Limit = 5 junctions)",
+        "optimality": "Not Guaranteed",
+        "completeness": "Complete only if Hospital is within 5 hops",
+        "time_complexity": "O(b^l)",
+        "space_complexity": "O(b * l)",
+        "criteria": "Performs DFS limited strictly to 5 junction hops. Prevents wandering into infinite outer loops.",
+        "operational_focus": "Restricts navigation to a localized emergency corridor."
+    },
+    "iddfs": {
+        "name": "Iterative Deepening DFS (IDDFS)",
+        "badge": "IDDFS",
+        "category": "Uninformed (Blind) Search",
+        "evaluation_fn": "Iterative Depth Increments (0, 1, 2...)",
+        "optimality": "Optimal in Junction Hops",
+        "completeness": "Complete",
+        "time_complexity": "O(b^d)",
+        "space_complexity": "O(b * d)",
+        "criteria": "Repeats DLS with incrementally increasing depth limits. Combines BFS's fewest-hop optimality with DFS's linear memory footprint.",
+        "operational_focus": "Combines shallowest-hop optimality with minimal memory consumption."
+    }
+}
+
+
 class EmergencyVehicleAgent:
 
     def __init__(
@@ -30,11 +106,12 @@ class EmergencyVehicleAgent:
         algorithm
     ):
 
+        algo_key = algorithm.lower()
         result = (
             self.route_manager.solve(
                 start,
                 goal,
-                algorithm
+                algo_key
             )
         )
 
@@ -46,6 +123,16 @@ class EmergencyVehicleAgent:
                 )
             )
 
+        result["metadata"] = ALGORITHM_METADATA.get(
+            algo_key,
+            {
+                "name": algorithm.upper(),
+                "category": "Search Algorithm",
+                "evaluation_fn": "Standard",
+                "criteria": "Pathfinding algorithm"
+            }
+        )
+
         return result
 
     def compare(
@@ -55,12 +142,12 @@ class EmergencyVehicleAgent:
     ):
 
         algorithms = [
-            "bfs",
-            "dfs",
-            "dls",
-            "iddfs",
+            "astar",
             "greedy",
-            "astar"
+            "bfs",
+            "iddfs",
+            "dls",
+            "dfs"
         ]
 
         results = []
@@ -75,6 +162,7 @@ class EmergencyVehicleAgent:
                 )
             )
 
+            result["metadata"] = ALGORITHM_METADATA.get(algorithm, {})
             results.append(result)
 
         return results
@@ -88,13 +176,15 @@ class EmergencyVehicleAgent:
     ):
         """
         Executes the full emergency dispatch and route planning workflow:
-        1. Receives emergency details.
-        2. Assigns vehicle via Constraint Satisfaction (CSP).
+        1. Receives real emergency details (e.g. Kakkanad Infopark, Kochi).
+        2. Assigns suitable Kerala fleet vehicle via Constraint Satisfaction (CSP).
         3. Updates Knowledge Base and derives facts via rule inference.
-        4. Calculates route using search algorithm (default A*).
+        4. Calculates focused route using chosen algorithm (default A*).
         5. Generates action plan (MOVE sequence).
-        6. Runs comparative analysis across search algorithms.
+        6. Prepares comparative analysis for dedicated benchmark section.
         """
+        algo_key = algorithm.lower()
+
         # Constraint Satisfaction for vehicle assignment
         csp_result = assign_vehicle(emergency, vehicles)
         if not csp_result["success"]:
@@ -123,28 +213,29 @@ class EmergencyVehicleAgent:
             kb.add_fact(fact)
 
         # Route planning to destination hospital
-        start_location = emergency.get("location", "Emergency")
-        if isinstance(hospitals, list) and len(hospitals) > 0:
-            goal_hospital = hospitals[0].get("location", "Hospital")
-        elif isinstance(hospitals, str):
-            goal_hospital = hospitals
-        else:
-            goal_hospital = "Hospital"
+        start_location = emergency.get("location", "Kakkanad_Infopark")
+        goal_hospital = emergency.get("target_hospital")
+        if not goal_hospital:
+            if isinstance(hospitals, list) and len(hospitals) > 0:
+                goal_hospital = hospitals[0].get("location", "Aster_Medcity")
+            else:
+                goal_hospital = "Aster_Medcity"
 
-        route_result = self.plan(start_location, goal_hospital, algorithm)
+        route_result = self.plan(start_location, goal_hospital, algo_key)
 
-        # Comparative search algorithm analysis
+        # Comparative search algorithm analysis for dedicated benchmark section
         comparisons = self.compare(start_location, goal_hospital)
 
         if not route_result["success"]:
             return {
                 "success": False,
                 "status": "No route found.",
-                "message": route_result.get("message", "No route found."),
+                "message": route_result.get("message", "No route found to hospital."),
                 "emergency": emergency,
                 "vehicle": assigned_vehicle,
                 "facts": kb.get_all_facts(),
-                "algorithm": route_result.get("algorithm", algorithm.upper()),
+                "algorithm": route_result.get("algorithm", algo_key.upper()),
+                "algo_metadata": route_result.get("metadata", {}),
                 "comparisons": comparisons
             }
 
@@ -154,7 +245,8 @@ class EmergencyVehicleAgent:
             "emergency": emergency,
             "vehicle": assigned_vehicle,
             "facts": kb.get_all_facts(),
-            "algorithm": route_result.get("algorithm", algorithm.upper()),
+            "algorithm": route_result.get("algorithm", algo_key.upper()),
+            "algo_metadata": route_result.get("metadata", {}),
             "path": route_result["path"],
             "cost": route_result["cost"],
             "expanded": route_result.get("expanded", 0),

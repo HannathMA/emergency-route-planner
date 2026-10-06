@@ -2,7 +2,7 @@
     --bg-base: #f8fafc;
     --bg-card: #ffffff;
     --bg-card-hover: #f1f5f9;
-    --bg-subtle: #f1f5f9;
+    --bg-subtle: #f8fafc;
     --border-color: #e2e8f0;
     --border-focus: #2563eb;
     
@@ -78,7 +78,7 @@ body {
 }
 
 .brand-icon {
-    font-size: 30px;
+    font-size: 32px;
     background: #eff6ff;
     border: 1px solid #bfdbfe;
     border-radius: var(--radius-md);
@@ -99,6 +99,22 @@ body {
     font-size: 13px;
     color: var(--text-secondary);
     margin-top: 2px;
+}
+
+.header-badges {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.region-badge {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 999px;
 }
 
 .status-indicator {
@@ -235,6 +251,10 @@ select {
 select:focus {
     border-color: var(--border-focus);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.form-group {
+    margin-bottom: 14px;
 }
 
 .form-row {
@@ -398,7 +418,7 @@ select:focus {
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: 14px;
-    min-height: 110px;
+    min-height: 115px;
     font-size: 12px;
     display: flex;
     flex-direction: column;
@@ -496,7 +516,7 @@ select:focus {
 }
 
 /* Visualizer Canvas */
-.visualizer-card .canvas-container {
+.canvas-container {
     background: #ffffff;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
@@ -544,14 +564,85 @@ select:focus {
     text-align: right;
 }
 
-/* Formatted Result Box (White Theme & High Contrast) */
+/* ========================================================
+   Algorithm Dedicated Focus & Criteria Box (Primary Focus)
+   ======================================================== */
+.algo-header-title h2 {
+    font-size: 19px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.algo-subtext {
+    font-size: 13px;
+    color: #2563eb;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.algo-criteria-box {
+    background: #f0f7ff;
+    border: 1px solid #bfdbfe;
+    border-radius: var(--radius-md);
+    padding: 18px;
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.criteria-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.criteria-card {
+    background: #ffffff;
+    border: 1px solid #dbeafe;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+}
+
+.criteria-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.05em;
+}
+
+.criteria-val {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e3a8a;
+    font-family: var(--font-mono);
+    margin-top: 3px;
+}
+
+.criteria-explanation {
+    background: #ffffff;
+    border: 1px solid #dbeafe;
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-size: 13px;
+    color: #1e293b;
+    line-height: 1.6;
+}
+
+.criteria-explanation b {
+    color: #1d4ed8;
+}
+
+/* Formatted Result Box */
 .formatted-result-box {
-    background: #f8fafc;
+    background: #ffffff;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: 20px;
     font-family: var(--font-mono);
     font-size: 14px;
+    box-shadow: var(--shadow-sm);
 }
 
 .status-badge {
@@ -567,12 +658,6 @@ select:focus {
     color: #059669;
 }
 
-.status-idle {
-    background: #f1f5f9;
-    border: 1px solid var(--border-color);
-    color: var(--text-muted);
-}
-
 .status-danger {
     background: #fef2f2;
     border: 1px solid #fecaca;
@@ -580,14 +665,14 @@ select:focus {
 }
 
 .result-line {
-    padding: 5px 0;
+    padding: 6px 0;
     display: flex;
     gap: 12px;
 }
 
 .result-label {
     color: #475569;
-    min-width: 120px;
+    min-width: 140px;
     font-weight: 600;
 }
 
@@ -598,11 +683,12 @@ select:focus {
 
 .result-highlight {
     color: #1d4ed8;
+    font-weight: 700;
 }
 
 .result-path {
     color: #059669;
-    font-weight: 700;
+    font-weight: 800;
     word-break: break-all;
 }
 
@@ -627,7 +713,7 @@ select:focus {
 }
 
 .action-step {
-    background: #ffffff;
+    background: #f8fafc;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     padding: 8px 14px;
@@ -649,7 +735,13 @@ select:focus {
     font-weight: bold;
 }
 
-/* Comparison Benchmark Table */
+/* ========================================================
+   Dedicated Section: Multi-Algorithm Benchmark (Separate)
+   ======================================================== */
+.benchmark-section {
+    margin-top: 8px;
+}
+
 .table-responsive {
     overflow-x: auto;
 }
@@ -662,11 +754,11 @@ select:focus {
 
 .benchmark-table th {
     text-align: left;
-    padding: 11px 14px;
+    padding: 12px 14px;
     background: #f8fafc;
     color: var(--text-secondary);
     font-weight: 700;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 2px solid var(--border-color);
 }
 
 .benchmark-table td {
@@ -715,6 +807,33 @@ select:focus {
     background: #fef2f2;
     color: #dc2626;
     border: 1px solid #fecaca;
+}
+
+.benchmark-conclusion-box {
+    margin-top: 18px;
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.benchmark-conclusion-box h4 {
+    color: #0f172a;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.benchmark-conclusion-box ul {
+    margin-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.benchmark-conclusion-box li b {
+    color: #1e3a8a;
 }
 
 /* Footer */
