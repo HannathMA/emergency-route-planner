@@ -1,4 +1,4 @@
-// Kerala Emergency Route Planner - Frontend Controller
+// Kerala Emergency Route Planner - Professional Frontend Controller
 
 let networkData = window.INITIAL_DATA || {
     roads: [],
@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     onEmergencyChange();
     await fetchNetworkState();
     renderNetworkSvg();
-    // Run initial dispatch with default A*
+    // Initial dispatch execution
     dispatchEmergency();
 });
 
@@ -48,36 +48,45 @@ function onEmergencyChange() {
         return;
     }
 
-    const priorityClass = emergency.priority.toUpperCase() === "CRITICAL" ? "priority-critical" : "priority-high";
+    const priorityBadge = emergency.priority.toUpperCase() === "CRITICAL" ? 
+        '<span class="status-badge status-danger">CRITICAL PRIORITY</span>' : 
+        '<span class="status-badge status-idle" style="color: #b45309; background: #fffbeb;">HIGH PRIORITY</span>';
+    
     const locName = formatName(emergency.location);
     const hospName = formatName(emergency.target_hospital || "Aster_Medcity");
 
     detailsBox.innerHTML = `
-        <div class="meta-row">
-            <span class="meta-key">Incident Type:</span>
-            <span class="meta-val">${emergency.type}</span>
+        <div class="summary-pill">
+            <span class="summary-label">Incident Type:</span>
+            <span class="summary-value">${emergency.type}</span>
         </div>
-        <div class="meta-row">
-            <span class="meta-key">Priority Level:</span>
-            <span class="${priorityClass}">${emergency.priority}</span>
+        <div class="summary-pill">
+            <span class="summary-label">Priority Level:</span>
+            ${priorityBadge}
         </div>
-        <div class="meta-row">
-            <span class="meta-key">Incident Location:</span>
-            <span class="meta-val">📍 ${locName}, Kochi</span>
+        <div class="summary-pill">
+            <span class="summary-label">Incident Site:</span>
+            <span class="summary-value">📍 ${locName}, Kochi</span>
         </div>
-        <div class="meta-row">
-            <span class="meta-key">Destination Hospital:</span>
-            <span class="meta-val" style="color: #059669;">🏥 ${hospName}</span>
+        <div class="summary-pill">
+            <span class="summary-label">Target Hospital:</span>
+            <span class="summary-value" style="color: #059669;">🏥 ${hospName}</span>
         </div>
-        <div class="meta-row">
-            <span class="meta-key">Required Equipment:</span>
-            <span class="meta-val">${emergency.required_equipment.join(", ")}</span>
+        <div class="summary-pill">
+            <span class="summary-label">Required Equipment:</span>
+            <span class="summary-value">${emergency.required_equipment.join(", ")}</span>
         </div>
-        ${emergency.description ? `
-        <div style="margin-top: 6px; font-size: 12px; color: #64748b; font-style: italic;">
-            "${emergency.description}"
-        </div>` : ''}
     `;
+}
+
+// Helper to look up segment cost between two nodes
+function getRoadSegmentCost(source, dest) {
+    if (!networkData.roads) return 0;
+    const road = networkData.roads.find(r => 
+        (r.source === source && r.destination === dest) ||
+        (r.source === dest && r.destination === source)
+    );
+    return road ? road.cost : 0;
 }
 
 // Main Dispatch: Executes Focused Route for Selected Algorithm
@@ -87,7 +96,7 @@ async function dispatchEmergency() {
 
     const statusBadge = document.getElementById("routeStatusBadge");
     statusBadge.className = "status-badge status-idle";
-    statusBadge.innerText = "Computing Route...";
+    statusBadge.innerText = "Computing Navigation...";
 
     try {
         const response = await fetch("/api/emergency/dispatch", {
@@ -114,7 +123,7 @@ async function dispatchEmergency() {
         if (data.success) {
             currentRoutePath = data.path || [];
             statusBadge.className = "status-badge status-success";
-            statusBadge.innerText = "Route Generated";
+            statusBadge.innerText = "Optimal Route Ready";
         } else {
             currentRoutePath = [];
             statusBadge.className = "status-badge status-danger";
@@ -131,71 +140,121 @@ async function dispatchEmergency() {
 
 // Render Focused Algorithm Output (Direct focus on selected algorithm)
 function renderFocusedAlgorithmOutput(data, selectedAlgo) {
-    const heading = document.getElementById("activeAlgoHeading");
-    const subtext = document.getElementById("activeAlgoCategory");
-    const criteriaBox = document.getElementById("algoCriteriaBox");
-    const formattedBox = document.getElementById("formattedResultBox");
-    const actionsSection = document.getElementById("actionsSection");
-    const actionPlanTimeline = document.getElementById("actionPlanTimeline");
-    const cspOutput = document.getElementById("cspOutput");
-    const kbOutput = document.getElementById("kbOutput");
-
     const meta = data.algo_metadata || {};
+    const em = data.emergency || {};
+    const v = data.vehicle || {};
 
-    // 1. Algorithm Identity Header
-    heading.innerText = `🎯 Selected Search Algorithm: ${meta.name || data.algorithm}`;
-    subtext.innerText = `${meta.category || 'Search Algorithm'} • ${meta.optimality || ''}`;
+    // 1. Mission Header & Metrics
+    const heading = document.getElementById("activeRouteHeading");
+    heading.innerText = `${em.type || 'Emergency'} → ${formatName(em.target_hospital || 'Aster_Medcity')}`;
 
-    // 2. Algorithm Criteria & Working Principle Box
-    criteriaBox.innerHTML = `
-        <div class="criteria-grid">
-            <div class="criteria-card">
-                <div class="criteria-title">Evaluation Function</div>
-                <div class="criteria-val">${meta.evaluation_fn || 'Standard'}</div>
-            </div>
-            <div class="criteria-card">
-                <div class="criteria-title">Optimality Guarantee</div>
-                <div class="criteria-val" style="font-size: 13px; color: ${meta.optimality && meta.optimality.includes('Optimal') ? '#059669' : '#b45309'};">
-                    ${meta.optimality || 'Empirical'}
+    const metricCost = document.getElementById("metricCost");
+    const metricCostSub = document.getElementById("metricCostSub");
+    const metricAlgo = document.getElementById("metricAlgo");
+    const metricParadigm = document.getElementById("metricParadigm");
+    const metricExpanded = document.getElementById("metricExpanded");
+    const metricOptimality = document.getElementById("metricOptimality");
+
+    if (data.success) {
+        metricCost.innerText = `${data.cost} km`;
+        metricCostSub.innerText = `Total Travel Distance`;
+        metricAlgo.innerText = meta.badge || data.algorithm;
+        metricParadigm.innerText = meta.category || 'Search Algorithm';
+        metricExpanded.innerText = `${data.expanded !== undefined ? data.expanded : '—'} Nodes`;
+        metricOptimality.innerText = meta.optimality && meta.optimality.includes("Optimal") ? "Optimal" : "Suboptimal";
+        metricOptimality.className = meta.optimality && meta.optimality.includes("Optimal") ? "metric-val text-success" : "metric-val" ;
+    } else {
+        metricCost.innerText = "—";
+        metricCostSub.innerText = "Route Blocked";
+        metricAlgo.innerText = meta.badge || data.algorithm;
+        metricParadigm.innerText = meta.category || 'Search Algorithm';
+        metricExpanded.innerText = "—";
+        metricOptimality.innerText = "Failed";
+        metricOptimality.className = "metric-val" ;
+    }
+
+    // 2. Visual Corridor Highway Progression Path
+    const corridorWrapper = document.getElementById("corridorPathWrapper");
+    if (data.success && data.path && data.path.length > 0) {
+        let corridorHtml = "";
+        for (let i = 0; i < data.path.length; i++) {
+            const node = data.path[i];
+            const isFirst = (i === 0);
+            const isLast = (i === data.path.length - 1);
+
+            let chipClass = "node-chip";
+            let icon = "";
+            if (isFirst) {
+                chipClass += " chip-emergency";
+                icon = "🚨 ";
+            } else if (isLast) {
+                chipClass += " chip-hospital";
+                icon = "🏥 ";
+            }
+
+            corridorHtml += `<div class="${chipClass}">${icon}${formatName(node)}</div>`;
+
+            if (!isLast) {
+                const segCost = getRoadSegmentCost(node, data.path[i + 1]);
+                corridorHtml += `
+                    <div class="path-arrow-step">
+                        <span>→</span>
+                        <span>${segCost} km</span>
+                    </div>
+                `;
+            }
+        }
+        corridorWrapper.innerHTML = corridorHtml;
+    } else {
+        corridorWrapper.innerHTML = `<span style="color: #dc2626; font-size: 13px; font-weight: 600;">No clear path to destination hospital. Corridors obstructed.</span>`;
+    }
+
+    // 3. Turn-by-Turn Maneuvers (Step 8 Action Plan)
+    const actionPlanTimeline = document.getElementById("actionPlanTimeline");
+    const actionsSection = document.getElementById("actionsSection");
+
+    if (data.success && data.actions && data.actions.length > 0) {
+        actionsSection.style.display = "block";
+        actionPlanTimeline.innerHTML = data.actions.map((act, i) => {
+            const segCost = getRoadSegmentCost(act.from, act.to);
+            return `
+                <div class="action-step-item">
+                    <div class="action-step-main">
+                        <span class="step-badge">Stage ${i + 1}</span>
+                        <span>Proceed via highway from <b>${formatName(act.from)}</b> to <b>${formatName(act.to)}</b></span>
+                    </div>
+                    <span class="step-dist-badge">${segCost} km</span>
                 </div>
-            </div>
-            <div class="criteria-card">
-                <div class="criteria-title">Time & Space Complexity</div>
-                <div class="criteria-val" style="font-size: 13px;">T: ${meta.time_complexity || 'O(b^d)'} | S: ${meta.space_complexity || 'O(b^d)'}</div>
-            </div>
-            <div class="criteria-card">
-                <div class="criteria-title">Nodes Expanded</div>
-                <div class="criteria-val">${data.expanded !== undefined ? data.expanded + ' junctions' : '—'}</div>
-            </div>
-        </div>
-        <div class="criteria-explanation">
-            <div><b>Working Criteria:</b> ${meta.criteria || ''}</div>
-            <div style="margin-top: 4px;"><b>Operational Focus:</b> ${meta.operational_focus || ''}</div>
-        </div>
-    `;
+            `;
+        }).join("");
+    } else {
+        actionsSection.style.display = "none";
+    }
 
-    // 3. CSP Vehicle Allocation Box
+    // 4. Vehicle Assignment (CSP) Box
+    const cspOutput = document.getElementById("cspOutput");
     if (data.vehicle) {
         cspOutput.innerHTML = `
-            <div>
-                <span class="intel-pill pill-vehicle">🚑 ${data.vehicle.id}</span>
-                <span style="font-weight: 600; color: #1e293b;">${data.vehicle.name || data.vehicle.type}</span>
+            <div class="vehicle-callout">
+                <span class="vehicle-id-badge">${data.vehicle.id}</span>
+                <span style="font-weight: 700; color: #0f172a; margin-top: 2px;">${data.vehicle.name || data.vehicle.type}</span>
             </div>
-            <div style="margin-top: 6px; font-size: 12px;">
-                <b>Base Location:</b> ${formatName(data.vehicle.location)}
+            <div style="font-size: 12px; color: #475569;">
+                <b>Stationed At:</b> ${formatName(data.vehicle.location)} • <b>Fleet Type:</b> ${data.vehicle.type}
             </div>
-            <div style="font-size: 12px;">
-                <b>Onboard Equipment:</b> ${data.vehicle.equipment.join(", ")}
+            <div style="font-size: 12px; color: #475569;">
+                <b>Onboard Units:</b> ${data.vehicle.equipment.join(", ")}
             </div>
-            <div style="color: #059669; font-weight: 700; font-size: 11px; margin-top: 6px;">
+            <div style="color: #059669; font-weight: 700; font-size: 11px; margin-top: 4px;">
                 ✓ Constraint Satisfaction: Equipment matched
             </div>
         `;
     } else {
-        cspOutput.innerHTML = `<span style="color: #dc2626;">No vehicle satisfied constraints</span>`;
+        cspOutput.innerHTML = `<span style="color: #dc2626;">No vehicle satisfied equipment requirements.</span>`;
     }
 
-    // 4. Knowledge Base & Rule Deductions
+    // 5. Knowledge Base & Rule Deductions Box
+    const kbOutput = document.getElementById("kbOutput");
     if (data.facts && data.facts.length > 0) {
         const pills = data.facts.map(fact => {
             const isRuleConclusion = fact.includes("USE_") || fact.includes("AVOID_") || fact.includes("CAN_BE");
@@ -204,86 +263,40 @@ function renderFocusedAlgorithmOutput(data, selectedAlgo) {
         }).join("");
         kbOutput.innerHTML = `
             <div><b>Active Facts & Deductions:</b></div>
-            <div style="margin-top: 6px;">${pills}</div>
+            <div style="margin-top: 4px;">${pills}</div>
         `;
     } else {
         kbOutput.innerHTML = `<span class="placeholder-text">No active inferences</span>`;
     }
 
-    // 5. Clean Structured Route Result (Matching User's Specified Format)
-    if (data.success) {
-        const em = data.emergency || {};
-        const v = data.vehicle || {};
-        const formattedPath = data.path.map(formatName).join(" → ");
+    // 6. Selected Algorithm Deep-Dive Box
+    const algoHeading = document.getElementById("activeAlgoHeading");
+    const algoBadge = document.getElementById("activeAlgoParadigmBadge");
+    const algoCriteriaBox = document.getElementById("algoCriteriaBox");
 
-        formattedBox.innerHTML = `
-            <div class="result-line">
-                <span class="result-label">Emergency:</span>
-                <span class="result-value result-highlight">${em.type || 'N/A'}</span>
-            </div>
-            <div class="result-line">
-                <span class="result-label">Priority:</span>
-                <span class="result-value">${em.priority || 'N/A'}</span>
-            </div>
-            <div class="result-line">
-                <span class="result-label">Incident Site:</span>
-                <span class="result-value">📍 ${formatName(em.location || 'Kakkanad_Infopark')}, Kochi</span>
-            </div>
-            <div class="result-line">
-                <span class="result-label">Destination Hospital:</span>
-                <span class="result-value" style="color: #059669; font-weight: 700;">🏥 ${formatName(em.target_hospital || 'Aster_Medcity')}</span>
-            </div>
-            <div class="result-line">
-                <span class="result-label">Assigned Vehicle:</span>
-                <span class="result-value result-highlight">${v.id || 'N/A'} (${v.name || v.type})</span>
-            </div>
-            <div class="result-line">
-                <span class="result-label">Algorithm Evaluated:</span>
-                <span class="result-value"><b>${meta.name || data.algorithm}</b></span>
-            </div>
-            <div class="result-line">
-                <span class="result-label">Generated Route:</span>
-                <span class="result-path">${formattedPath}</span>
-            </div>
-            <div class="result-line">
-                <span class="result-label">Total Road Distance:</span>
-                <span class="result-value"><b>${data.cost} km</b></span>
-            </div>
-            <div class="result-line">
-                <span class="result-label">Nodes Expanded:</span>
-                <span class="result-value">${data.expanded !== undefined ? data.expanded + ' junctions' : '—'}</span>
-            </div>
-            <div class="result-line">
-                <span class="result-label">Navigation Status:</span>
-                <span class="result-value" style="color: #059669; font-weight: 700;">${data.status}</span>
-            </div>
-        `;
+    algoHeading.innerText = `${meta.name || data.algorithm} Strategy`;
+    algoBadge.innerText = meta.category || 'Search Paradigm';
 
-        // 6. Step 8 Action Plan Sequence
-        if (data.actions && data.actions.length > 0) {
-            actionsSection.style.display = "block";
-            actionPlanTimeline.innerHTML = data.actions.map((act, i) => `
-                <div class="action-step">
-                    <span class="action-badge">Step ${i + 1}</span>
-                    <span>MOVE: <b>${formatName(act.from)}</b> → <b>${formatName(act.to)}</b></span>
-                </div>
-            `).join("");
-        } else {
-            actionsSection.style.display = "none";
-        }
-    } else {
-        formattedBox.innerHTML = `
-            <div class="result-line">
-                <span class="result-label">Status:</span>
-                <span class="result-value" style="color: #dc2626; font-weight: 700;">${data.status || 'Failed'}</span>
+    algoCriteriaBox.innerHTML = `
+        <div class="algo-stats-grid">
+            <div class="algo-stat-item">
+                <div class="algo-stat-label">Evaluation Metric</div>
+                <div class="algo-stat-val">${meta.evaluation_fn || 'Standard'}</div>
             </div>
-            <div class="result-line">
-                <span class="result-label">Reason:</span>
-                <span class="result-value">${data.message || 'No accessible corridor found to hospital.'}</span>
+            <div class="algo-stat-item">
+                <div class="algo-stat-label">Complexity</div>
+                <div class="algo-stat-val" style="font-size: 12px;">T: ${meta.time_complexity || 'O(b^d)'} | S: ${meta.space_complexity || 'O(b^d)'}</div>
             </div>
-        `;
-        actionsSection.style.display = "none";
-    }
+            <div class="algo-stat-item">
+                <div class="algo-stat-label">Corridor Hops</div>
+                <div class="algo-stat-val">${data.expanded !== undefined ? data.expanded + ' Junctions' : '—'}</div>
+            </div>
+        </div>
+        <div class="algo-text-block">
+            <div><b>Decision Criteria:</b> ${meta.criteria || ''}</div>
+            <div style="margin-top: 6px;"><b>Operational Rationale:</b> ${meta.operational_focus || ''}</div>
+        </div>
+    `;
 }
 
 // Render Benchmark Comparison in the Separate Section
@@ -299,7 +312,7 @@ function renderBenchmarkTable(comparisons) {
         "greedy": { name: "Greedy Best-First", paradigm: "Informed", fn: "f = h", optimal: false },
         "bfs": { name: "Breadth-First (BFS)", paradigm: "Uninformed", fn: "Queue (FIFO)", optimal: false },
         "iddfs": { name: "Iterative Deepening (IDDFS)", paradigm: "Uninformed", fn: "Iterative Depth", optimal: false },
-        "dls": { name: "Depth-Limited (DLS)", paradigm: "Uninformed", fn: "Depth Limit = 5", optimal: false },
+        "dls": { name: "Depth-Limited (DLS)", paradigm: "Uninformed", fn: "Depth Bound = 5", optimal: false },
         "dfs": { name: "Depth-First (DFS)", paradigm: "Uninformed", fn: "Stack (LIFO)", optimal: false }
     };
 
@@ -315,9 +328,9 @@ function renderBenchmarkTable(comparisons) {
         if (!item.success) {
             badgeHtml = `<span class="table-tag tag-failed">No Route</span>`;
         } else if (isOptimal) {
-            badgeHtml = `<span class="table-tag tag-optimal">Optimal (Lowest Cost)</span>`;
+            badgeHtml = `<span class="table-tag tag-optimal">Optimal (${item.cost} km)</span>`;
         } else {
-            badgeHtml = `<span class="table-tag tag-suboptimal">Suboptimal (+${item.cost - minCost} km)</span>`;
+            badgeHtml = `<span class="table-tag tag-suboptimal">+${item.cost - minCost} km Detour</span>`;
         }
 
         const paradigmClass = conf.paradigm === "Informed" ? "tag-informed" : "tag-uninformed";
@@ -330,7 +343,7 @@ function renderBenchmarkTable(comparisons) {
                 <td style="font-family: var(--font-mono); font-size: 12px; color: #475569;">${conf.fn}</td>
                 <td style="font-family: var(--font-mono); font-size: 12px;">${pathFormatted}</td>
                 <td><b>${item.success ? item.cost + ' km' : '—'}</b></td>
-                <td>${item.expanded !== undefined ? item.expanded : '—'}</td>
+                <td>${item.expanded !== undefined ? item.expanded + ' nodes' : '—'}</td>
                 <td>${badgeHtml}</td>
             </tr>
         `;
@@ -361,7 +374,7 @@ async function performRoadToggle(source, destination, isBlock) {
         const data = await res.json();
         currentBlockedRoads = data.blocked || [];
         updateBlockedRoadsUi();
-        // Step 9: Dynamic re-routing
+        // Dynamic re-routing (Step 9)
         await dispatchEmergency();
     } catch (err) {
         console.error("Error toggling road:", err);
@@ -385,7 +398,7 @@ async function clearAllBlocks() {
 function updateBlockedRoadsUi() {
     const container = document.getElementById("blockedRoadsList");
     if (!currentBlockedRoads || currentBlockedRoads.length === 0) {
-        container.innerHTML = `<span class="tag tag-empty">No roadblocks (All corridors free)</span>`;
+        container.innerHTML = `<span class="tag-empty">All corridors open</span>`;
         return;
     }
 
@@ -414,7 +427,7 @@ function isRoadInCurrentRoute(u, v) {
     return false;
 }
 
-// Helper: Format internal node names to human friendly Kerala location names
+// Helper: Format node names for clean display
 function formatName(name) {
     if (!name) return "";
     return name.replace(/_/g, " ");
@@ -466,7 +479,7 @@ function renderNetworkSvg() {
         let filterAttr = "";
 
         if (blocked) {
-            strokeColor = "#ef4444";
+            strokeColor = "#dc2626";
             strokeWidth = 4;
             strokeDash = "6,4";
         } else if (onRoute) {
@@ -486,7 +499,7 @@ function renderNetworkSvg() {
                 <line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" 
                       stroke="transparent" stroke-width="16" />
                 <!-- Distance cost badge -->
-                <circle cx="${midX}" cy="${midY}" r="12" fill="#ffffff" stroke="${blocked ? '#ef4444' : (onRoute ? '#2563eb' : '#94a3b8')}" stroke-width="1.5" />
+                <circle cx="${midX}" cy="${midY}" r="12" fill="#ffffff" stroke="${blocked ? '#dc2626' : (onRoute ? '#2563eb' : '#cbd5e1')}" stroke-width="1.5" />
                 <text x="${midX}" y="${midY + 4}" fill="${blocked ? '#dc2626' : (onRoute ? '#1d4ed8' : '#475569')}" 
                       font-size="11" font-family="'JetBrains Mono', monospace" font-weight="700" text-anchor="middle">${blocked ? '✕' : road.cost + 'k'}</text>
             </g>
