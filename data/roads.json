@@ -1,0 +1,62 @@
+[
+    {
+        "source": "Emergency",
+        "destination": "Junction_E",
+        "cost": 4
+    },
+    {
+        "source": "Emergency",
+        "destination": "Junction_F",
+        "cost": 2
+    },
+    {
+        "source": "Junction_E",
+        "destination": "Junction_B",
+        "cost": 4
+    },
+    {
+        "source": "Junction_E",
+        "destination": "Junction_D",
+        "cost": 3
+    },
+    {
+        "source": "Junction_F",
+        "destination": "Junction_B",
+        "cost": 6
+    },
+    {
+        "source": "Junction_F",
+        "destination": "Junction_C",
+        "cost": 3
+    },
+    {
+        "source": "Junction_B",
+        "destination": "Junction_A",
+        "cost": 3
+    },
+    {
+        "source": "Junction_C",
+        "destination": "Junction_A",
+        "cost": 5
+    },
+    {
+        "source": "Junction_C",
+        "destination": "Junction_D",
+        "cost": 2
+    },
+    {
+        "source": "Junction_D",
+        "destination": "Junction_A",
+        "cost": 5
+    },
+    {
+        "source": "Junction_A",
+        "destination": "Hospital",
+        "cost": 4
+    },
+    {
+        "source": "Junction_C",
+        "destination": "Hospital",
+        "cost": 6
+    }
+]

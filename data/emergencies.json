@@ -1,0 +1,29 @@
+[
+    {
+        "id": "E001",
+        "type": "Accident",
+        "priority": "HIGH",
+        "location": "Emergency",
+        "required_equipment": [
+            "First Aid"
+        ]
+    },
+    {
+        "id": "E002",
+        "type": "Cardiac Emergency",
+        "priority": "CRITICAL",
+        "location": "Emergency",
+        "required_equipment": [
+            "Cardiac"
+        ]
+    },
+    {
+        "id": "E003",
+        "type": "Fire Rescue",
+        "priority": "HIGH",
+        "location": "Emergency",
+        "required_equipment": [
+            "Rescue"
+        ]
+    }
+]

@@ -1,0 +1,33 @@
+[
+    {
+        "id": "AMB-01",
+        "type": "Ambulance",
+        "location": "Junction_A",
+        "available": true,
+        "equipment": [
+            "First Aid",
+            "Oxygen"
+        ]
+    },
+    {
+        "id": "AMB-02",
+        "type": "Advanced Ambulance",
+        "location": "Junction_C",
+        "available": true,
+        "equipment": [
+            "First Aid",
+            "Oxygen",
+            "Cardiac"
+        ]
+    },
+    {
+        "id": "RES-01",
+        "type": "Rescue Vehicle",
+        "location": "Junction_B",
+        "available": true,
+        "equipment": [
+            "Rescue",
+            "First Aid"
+        ]
+    }
+]

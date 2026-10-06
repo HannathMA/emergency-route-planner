@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Emergency Vehicle Route Planner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="brand">
+                    <div class="brand-icon">🚑</div>
+                    <div>
+                        <h1>Emergency Route Planner</h1>
+                        <p class="subtitle">AI-Powered Intelligent Dispatch & Adaptive State-Space Navigation</p>
+                    </div>
+                </div>
+                <div class="status-indicator">
+                    <span class="live-dot"></span>
+                    <span id="systemStatusText">System Active & Ready</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Grid -->
+        <main class="dashboard-grid">
+            
+            <!-- Left Column: Operations & Dispatch -->
+            <section class="left-panel">
+                
+                <!-- Card 1: Emergency Dispatch Center -->
+                <div class="card dispatch-card">
+                    <div class="card-header">
+                        <h2>🚨 Emergency Dispatch Center</h2>
+                        <span class="badge badge-accent">Step 1 & 2</span>
+                    </div>
+                    <p class="card-desc">Select an active emergency event to trigger vehicle allocation via Constraint Satisfaction (CSP) and A* navigation.</p>
+
+                    <div class="emergency-selector">
+                        <label for="emergencySelect">Active Incident:</label>
+                        <select id="emergencySelect" onchange="onEmergencyChange()">
+                            {% for em in emergencies %}
+                            <option value="{{ em.id }}" {% if em.id == 'E002' %}selected{% endif %}>
+                                {{ em.type }} ({{ em.priority }}) — At {{ em.location }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div id="emergencyDetailsBox" class="meta-box">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="dispatchAlgorithm">Route Algorithm:</label>
+                            <select id="dispatchAlgorithm">
+                                <option value="astar" selected>A* Heuristic Search (Optimal)</option>
+                                <option value="greedy">Greedy Best-First</option>
+                                <option value="bfs">Breadth-First Search (BFS)</option>
+                                <option value="dfs">Depth-First Search (DFS)</option>
+                                <option value="iddfs">Iterative Deepening (IDDFS)</option>
+                                <option value="dls">Depth-Limited Search (DLS)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="dispatchEmergency()">
+                            ⚡ Dispatch Vehicle & Calculate Route
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 2: Knowledge Base & CSP Inference -->
+                <div class="card intelligence-card">
+                    <div class="card-header">
+                        <h2>🧠 AI Knowledge Base & Reasoning</h2>
+                        <span class="badge badge-purple">Steps 2 & 7</span>
+                    </div>
+
+                    <div class="intel-split">
+                        <div class="intel-col">
+                            <h4>Constraint Satisfaction (CSP)</h4>
+                            <div id="cspOutput" class="intel-box">
+                                <span class="placeholder-text">Run dispatch to inspect CSP vehicle matching</span>
+                            </div>
+                        </div>
+
+                        <div class="intel-col">
+                            <h4>Forward Chaining Rule Engine</h4>
+                            <div id="kbOutput" class="intel-box">
+                                <span class="placeholder-text">Rule deductions will appear here</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Dynamic Road Network Obstacles -->
+                <div class="card road-control-card">
+                    <div class="card-header">
+                        <h2>🚧 Dynamic Road Network Control</h2>
+                        <span class="badge badge-warning">Step 4 & 9</span>
+                    </div>
+                    <p class="card-desc">Simulate traffic blocks or hazards to witness real-time AI dynamic re-routing.</p>
+
+                    <div class="road-actions-row">
+                        <div class="form-group flex-1">
+                            <label for="blockRoadSelect">Road Segment:</label>
+                            <select id="blockRoadSelect">
+                                {% for road in roads %}
+                                <option value="{{ road.source }}|{{ road.destination }}">
+                                    {{ road.source }} ⟷ {{ road.destination }} (Cost: {{ road.cost }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="button-group-inline">
+                            <button class="btn btn-danger" onclick="toggleBlockSelectedRoad(true)">
+                                🚧 Block Road
+                            </button>
+                            <button class="btn btn-secondary" onclick="toggleBlockSelectedRoad(false)">
+                                🟢 Open Road
+                            </button>
+                            <button class="btn btn-outline" onclick="clearAllBlocks()" title="Clear all roadblocks">
+                                ↺ Reset All
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="active-blocks-wrapper">
+                        <h4>Currently Blocked Segments:</h4>
+                        <div id="blockedRoadsList" class="tags-container">
+                            <span class="tag tag-empty">No blocked roads (All roads clear)</span>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Right Column: Visualizer, Plan & Analysis -->
+            <section class="right-panel">
+                
+                <!-- Card 4: Interactive Network Visualizer Map -->
+                <div class="card visualizer-card">
+                    <div class="card-header">
+                        <h2>🗺️ Live State-Space Road Network</h2>
+                        <div class="map-legend">
+                            <span class="legend-item"><span class="dot dot-emergency"></span> Incident</span>
+                            <span class="legend-item"><span class="dot dot-hospital"></span> Hospital</span>
+                            <span class="legend-item"><span class="dot dot-route"></span> Active Path</span>
+                            <span class="legend-item"><span class="dot dot-blocked"></span> Blocked</span>
+                        </div>
+                    </div>
+                    <div class="canvas-container">
+                        <svg id="networkSvg" viewBox="0 0 850 420" preserveAspectRatio="xMidYMid meet">
+                            <!-- Rendered dynamically by script.js -->
+                        </svg>
+                    </div>
+                    <div class="canvas-footnote">
+                        <span>💡 Tip: Click any road line or junction on the map to toggle road obstruction!</span>
+                    </div>
+                </div>
+
+                <!-- Card 5: Result Card (Exact Expected Output) -->
+                <div class="card result-card" id="resultCard">
+                    <div class="card-header">
+                        <h2>📋 Mission Result & Route Execution</h2>
+                        <span id="routeStatusBadge" class="status-badge status-idle">Awaiting Dispatch</span>
+                    </div>
+
+                    <div id="formattedResultBox" class="formatted-result-box">
+                        <div class="placeholder-result">
+                            <p>Click <b>"Dispatch Vehicle & Calculate Route"</b> to plan the emergency journey.</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 8: Action Sequence -->
+                    <div class="planning-actions-section" id="actionsSection" style="display: none;">
+                        <h3>🚦 Step 8: Generated Action Plan (Sequence)</h3>
+                        <div id="actionPlanTimeline" class="actions-timeline">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Algorithm Benchmark Comparison -->
+                <div class="card comparison-card">
+                    <div class="card-header">
+                        <h2>📊 Search Algorithm Performance Comparison</h2>
+                        <button class="btn btn-sm btn-outline" onclick="runComparativeAnalysis()">
+                            🔄 Re-run All 6 Algorithms
+                        </button>
+                    </div>
+                    <p class="card-desc">Comparative analysis across Uninformed (BFS, DFS, DLS, IDDFS) and Informed (Greedy, A*) search algorithms.</p>
+                    
+                    <div class="table-responsive">
+                        <table class="benchmark-table" id="benchmarkTable">
+                            <thead>
+                                <tr>
+                                    <th>Algorithm</th>
+                                    <th>Type</th>
+                                    <th>Calculated Route</th>
+                                    <th>Total Cost</th>
+                                    <th>Nodes Expanded</th>
+                                    <th>Optimality</th>
+                                </tr>
+                            </thead>
+                            <tbody id="benchmarkTbody">
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">Run dispatch to benchmark algorithms</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </section>
+
+        </main>
+
+        <footer class="app-footer">
+            <p>Emergency Route Planner • State Space Search, Constraint Satisfaction & Knowledge Engineering</p>
+        </footer>
+    </div>
+
+    <!-- Data Injection for Client Script -->
+    <script>
+        window.INITIAL_DATA = {
+            roads: {{ roads | tojson }},
+            vehicles: {{ vehicles | tojson }},
+            emergencies: {{ emergencies | tojson }},
+            hospitals: {{ hospitals | tojson }},
+            coordinates: {{ coordinates | tojson }}
+        };
+    </script>
+    <script src="/static/script.js"></script>
+</body>
+</html>
