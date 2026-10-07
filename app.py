@@ -101,6 +101,24 @@ def dispatch_emergency():
             "message": "Emergency details not found."
         }), 400
 
+    if algorithm == "auto":
+        priority = selected_emergency.get("priority", "HIGH").upper()
+        emergency_type = selected_emergency.get("type", "").lower()
+        blocked_count = len(route_manager.get_blocked_roads())
+
+        if "fire" in emergency_type:
+            # Firetrucks are heavy, prioritize fewest junction hops (BFS)
+            algorithm = "bfs"
+        elif priority == "CRITICAL" and blocked_count == 0:
+            # Critical patients need the absolute shortest physical distance
+            algorithm = "astar"
+        elif blocked_count > 0:
+            # If roads are blocked, BFS guarantees fewest complex detours
+            algorithm = "bfs"
+        else:
+            # For standard emergencies, Greedy is fast and heads straight to the hospital
+            algorithm = "greedy"
+
     result = agent.process_emergency(
         selected_emergency,
         vehicles,

@@ -1,35 +1,96 @@
 [
     {
-        "id": "E002",
+        "id": "E001",
         "type": "Cardiac Emergency",
         "description": "Critical heart attack reported at Infopark Phase-1, Kakkanad",
         "priority": "CRITICAL",
         "location": "Kakkanad_Infopark",
-        "target_hospital": "Aster_Medcity",
+        "target_hospital": "Kaloor",
         "required_equipment": [
             "Cardiac"
         ]
     },
     {
-        "id": "E001",
-        "type": "Seaport-Airport Road Accident",
-        "description": "Multi-vehicle collision near Kakkanad junction",
+        "id": "E002",
+        "type": "Industrial Fire Outbreak",
+        "description": "Massive fire hazard reported at Kalamassery Industrial Estate",
         "priority": "HIGH",
-        "location": "Kakkanad_Infopark",
+        "location": "Kalamassery",
+        "target_hospital": "Aster_Medcity",
+        "required_equipment": [
+            "Rescue",
+            "First Aid"
+        ]
+    },
+    {
+        "id": "E003",
+        "type": "Multi-Vehicle Collision",
+        "description": "Severe highway pileup at Vyttila Mobility Hub",
+        "priority": "CRITICAL",
+        "location": "Vyttila_Hub",
+        "target_hospital": "Aster_Medcity",
+        "required_equipment": [
+            "First Aid",
+            "Oxygen"
+        ]
+    },
+    {
+        "id": "E004",
+        "type": "Pedestrian Accident",
+        "description": "Hit and run emergency near Palarivattom Bypass",
+        "priority": "HIGH",
+        "location": "Palarivattom",
         "target_hospital": "Aster_Medcity",
         "required_equipment": [
             "First Aid"
         ]
     },
     {
-        "id": "E003",
-        "type": "Commercial Fire Outbreak",
-        "description": "Fire hazard reported at Kakkanad tech facility",
+        "id": "E005",
+        "type": "Mall Stampede / Evacuation",
+        "description": "Mass panic and injuries at Lulu Mall, Edappally",
+        "priority": "CRITICAL",
+        "location": "Edappally",
+        "target_hospital": "Aster_Medcity",
+        "required_equipment": [
+            "First Aid",
+            "Oxygen",
+            "Rescue"
+        ]
+    },
+    {
+        "id": "E006",
+        "type": "Chemical Spill",
+        "description": "Toxic hazard leak near Cheranallur riverbanks",
         "priority": "HIGH",
-        "location": "Kakkanad_Infopark",
+        "location": "Cheranallur",
         "target_hospital": "Aster_Medcity",
         "required_equipment": [
             "Rescue"
+        ]
+    },
+    {
+        "id": "E007",
+        "type": "Severe Cardiac Arrest",
+        "description": "Elderly patient collapsed at Vyttila Hub",
+        "priority": "CRITICAL",
+        "location": "Vyttila_Hub",
+        "target_hospital": "Kaloor",
+        "required_equipment": [
+            "Cardiac",
+            "Oxygen"
+        ]
+    },
+    {
+        "id": "E008",
+        "type": "Structural Collapse",
+        "description": "Old building collapsed trapping residents in Kalamassery",
+        "priority": "CRITICAL",
+        "location": "Kalamassery",
+        "target_hospital": "Aster_Medcity",
+        "required_equipment": [
+            "Rescue",
+            "First Aid"
         ]
     }
 ]

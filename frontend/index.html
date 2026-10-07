@@ -1,17 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kerala Emergency Route Planner | AI Navigation</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
 </head>
+
 <body>
     <div class="app-layout">
-        
+
         <!-- App Header -->
         <header class="app-header">
             <div class="header-container">
@@ -19,7 +23,8 @@
                     <div class="brand-icon">🚑</div>
                     <div class="brand-text">
                         <h1>Kerala Emergency Route Planner</h1>
-                        <p class="subtitle">AI Hospital Dispatch & Adaptive Corridor Routing • Kochi, Ernakulam District</p>
+                        <p class="subtitle">AI Hospital Dispatch & Adaptive Corridor Routing • Kochi, Ernakulam District
+                        </p>
                     </div>
                 </div>
                 <div class="header-meta">
@@ -37,7 +42,7 @@
 
         <!-- Top Mission Control Ribbon (Interactive Scenario Bar & Controls) -->
         <section class="mission-ribbon card">
-            
+
             <!-- Quick Preset Scenarios (One-Click Testing) -->
             <div class="preset-scenarios-strip">
                 <span class="preset-label">⚡ Quick Scenarios:</span>
@@ -54,6 +59,10 @@
                     <button class="preset-btn" id="presetBlock" onclick="loadScenario('blocked_corridor')">
                         🚧 Test Edappally Blockade
                     </button>
+                    <button class="preset-btn" onclick="generateRandomEmergency()"
+                        style="background: var(--brand-blue); color: white;">
+                        🎲 Random Incident
+                    </button>
                 </div>
             </div>
 
@@ -62,7 +71,7 @@
                     <label for="emergencySelect">Active Emergency Incident</label>
                     <select id="emergencySelect" onchange="onEmergencyChange()">
                         {% for em in emergencies %}
-                        <option value="{{ em.id }}" {% if em.id == 'E002' %}selected{% endif %}>
+                        <option value="{{ em.id }}" {% if em.id=='E002' %}selected{% endif %}>
                             {{ em.type }} ({{ em.priority }}) — {{ em.location | replace('_', ' ') }}
                         </option>
                         {% endfor %}
@@ -72,6 +81,7 @@
                 <div class="control-group">
                     <label for="dispatchAlgorithm">Search Algorithm</label>
                     <select id="dispatchAlgorithm" onchange="dispatchEmergency()">
+                        <option value="auto">🤖 Auto-Select Best Algorithm</option>
                         <option value="astar" selected>A* Heuristic Search (Optimal: f = g + h)</option>
                         <option value="greedy">Greedy Best-First Search (Heuristic: f = h)</option>
                         <option value="bfs">Breadth-First Search (Fewest Junction Hops)</option>
@@ -96,10 +106,10 @@
 
         <!-- Main Balanced Dashboard Grid (Two Column on Laptop, Stacks cleanly on Mobile) -->
         <main class="dashboard-main-grid">
-            
+
             <!-- Left Column: Navigation Plan & Intelligence -->
             <div class="dashboard-col">
-                
+
                 <!-- Card 1: Active Mission & Route Plan (Primary Focus) -->
                 <section class="card mission-card">
                     <div class="card-header">
@@ -114,8 +124,10 @@
                     <div class="algo-quick-tabs">
                         <span class="tabs-label">Switch Strategy:</span>
                         <div class="tabs-list">
-                            <button class="tab-chip active" id="tabAstar" onclick="switchAlgorithmTab('astar')">A* Search</button>
-                            <button class="tab-chip" id="tabGreedy" onclick="switchAlgorithmTab('greedy')">Greedy</button>
+                            <button class="tab-chip active" id="tabAstar" onclick="switchAlgorithmTab('astar')">A*
+                                Search</button>
+                            <button class="tab-chip" id="tabGreedy"
+                                onclick="switchAlgorithmTab('greedy')">Greedy</button>
                             <button class="tab-chip" id="tabBfs" onclick="switchAlgorithmTab('bfs')">BFS</button>
                             <button class="tab-chip" id="tabIddfs" onclick="switchAlgorithmTab('iddfs')">IDDFS</button>
                             <button class="tab-chip" id="tabDfs" onclick="switchAlgorithmTab('dfs')">DFS</button>
@@ -151,12 +163,15 @@
                         <div class="corridor-header-row">
                             <div class="corridor-title">Corridor Highway Traversal:</div>
                             <div class="sim-speed-wrapper">
-                                <span style="font-size: 11px; color: var(--text-tertiary); font-weight: 700;">LIVE SIMULATION:</span>
+                                <span style="font-size: 11px; color: var(--text-tertiary); font-weight: 700;">LIVE
+                                    SIMULATION:</span>
                                 <button id="simPlayBtn" class="btn btn-secondary btn-sm" onclick="toggleSimulation()">
                                     <span id="simPlayIcon">▶</span> <span id="simPlayText">Drive Ambulance</span>
                                 </button>
-                                <button class="btn btn-outline btn-sm btn-icon" onclick="resetSimulation()" title="Reset Journey">↺</button>
-                                <button id="audioToggleBtn" class="btn btn-outline btn-sm btn-icon" onclick="toggleAudio()" title="Toggle Sound">🔊</button>
+                                <button class="btn btn-outline btn-sm btn-icon" onclick="resetSimulation()"
+                                    title="Reset Journey">↺</button>
+                                <button id="audioToggleBtn" class="btn btn-outline btn-sm btn-icon"
+                                    onclick="toggleAudio()" title="Toggle Sound">🔊</button>
                             </div>
                         </div>
                         <div class="corridor-path-wrapper" id="corridorPathWrapper">
@@ -203,7 +218,7 @@
 
             <!-- Right Column: Interactive Map & Algorithm Analysis -->
             <div class="dashboard-col">
-                
+
                 <!-- Card 3: Interactive Kochi Road Network Map -->
                 <section class="card map-card">
                     <div class="card-header">
@@ -231,7 +246,8 @@
                     <div class="map-controls-panel">
                         <div class="controls-title-row">
                             <span class="controls-title">🚧 Simulate Road Blockade / Traffic Obstacle:</span>
-                            <button class="btn btn-sm btn-outline" onclick="clearAllBlocks()" title="Clear all roadblocks">
+                            <button class="btn btn-sm btn-outline" onclick="clearAllBlocks()"
+                                title="Clear all roadblocks">
                                 ↺ Clear All Blocks
                             </button>
                         </div>
@@ -239,7 +255,8 @@
                             <select id="blockRoadSelect" class="select-inline">
                                 {% for road in roads %}
                                 <option value="{{ road.source }}|{{ road.destination }}">
-                                    {{ road.source | replace('_', ' ') }} ⟷ {{ road.destination | replace('_', ' ') }} ({{ road.cost }} km)
+                                    {{ road.source | replace('_', ' ') }} ⟷ {{ road.destination | replace('_', ' ') }}
+                                    ({{ road.cost }} km)
                                 </option>
                                 {% endfor %}
                             </select>
@@ -286,7 +303,8 @@
             <div class="card-header">
                 <div>
                     <h2>📊 Multi-Algorithm Benchmark & Performance Study</h2>
-                    <p class="card-desc">Empirical comparison across all 6 search algorithms on the active incident corridor.</p>
+                    <p class="card-desc">Empirical comparison across all 6 search algorithms on the active incident
+                        corridor.</p>
                 </div>
                 <button class="btn btn-outline btn-sm" onclick="runComparativeAnalysis()">
                     🔄 Re-benchmark All 6 Algorithms
@@ -319,19 +337,24 @@
                 <div class="summary-points">
                     <div class="point-item">
                         <span class="bullet">✓</span>
-                        <span><b>A* Search:</b> Evaluates both actual highway distance $g(n)$ and straight-line Euclidean distance $h(n)$ to Aster Medcity, guaranteeing the mathematically optimal lowest-cost arrival.</span>
+                        <span><b>A* Search:</b> Evaluates both actual highway distance $g(n)$ and straight-line
+                            Euclidean distance $h(n)$ to Aster Medcity, guaranteeing the mathematically optimal
+                            lowest-cost arrival.</span>
                     </div>
                     <div class="point-item">
                         <span class="bullet">✓</span>
-                        <span><b>BFS:</b> Explores by junction levels; guarantees the fewest junction crossings but is blind to road lengths.</span>
+                        <span><b>BFS:</b> Explores by junction levels; guarantees the fewest junction crossings but is
+                            blind to road lengths.</span>
                     </div>
                     <div class="point-item">
                         <span class="bullet">✓</span>
-                        <span><b>Greedy Best-First:</b> Considers only straight-line distance $h(n)$; fast but vulnerable to detour traps when congested highways intervene.</span>
+                        <span><b>Greedy Best-First:</b> Considers only straight-line distance $h(n)$; fast but
+                            vulnerable to detour traps when congested highways intervene.</span>
                     </div>
                     <div class="point-item">
                         <span class="bullet">✓</span>
-                        <span><b>DFS / IDDFS:</b> Explore deep corridors with minimal memory footprints, with IDDFS guaranteeing shallowest-hop recovery without excessive space consumption.</span>
+                        <span><b>DFS / IDDFS:</b> Explore deep corridors with minimal memory footprints, with IDDFS
+                            guaranteeing shallowest-hop recovery without excessive space consumption.</span>
                     </div>
                 </div>
             </div>
@@ -351,12 +374,13 @@
     <script>
         window.INITIAL_DATA = {
             roads: {{ roads | tojson }},
-            vehicles: {{ vehicles | tojson }},
-            emergencies: {{ emergencies | tojson }},
-            hospitals: {{ hospitals | tojson }},
-            coordinates: {{ coordinates | tojson }}
+        vehicles: { { vehicles | tojson } },
+        emergencies: { { emergencies | tojson } },
+        hospitals: { { hospitals | tojson } },
+        coordinates: { { coordinates | tojson } }
         };
     </script>
     <script src="/static/script.js"></script>
 </body>
+
 </html>

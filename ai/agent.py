@@ -227,17 +227,47 @@ class EmergencyVehicleAgent:
         comparisons = self.compare(start_location, goal_hospital)
 
         if not route_result["success"]:
-            return {
-                "success": False,
-                "status": "No route found.",
-                "message": route_result.get("message", "No route found to hospital."),
-                "emergency": emergency,
-                "vehicle": assigned_vehicle,
-                "facts": kb.get_all_facts(),
-                "algorithm": route_result.get("algorithm", algo_key.upper()),
-                "algo_metadata": route_result.get("metadata", {}),
-                "comparisons": comparisons
-            }
+            # Aerial Override: If roads are completely blocked, deploy Helicopter!
+            helicopter = next((v for v in vehicles if "AIR" in v.get("id", "") or "Helicopter" in v.get("name", "")), None)
+            
+            if helicopter:
+                assigned_vehicle = helicopter
+                kb.add_fact("DEPLOY_AIR_AMBULANCE_NO_ROUTE")
+                kb.add_fact("TERRESTRIAL_BLOCKADE_DETECTED")
+                
+                route_result = {
+                    "success": True,
+                    "algorithm": "AERIAL",
+                    "path": [start_location, goal_hospital],
+                    "cost": 15, # Flat aerial distance
+                    "expanded": 0,
+                    "actions": [
+                        {"from": start_location, "to": goal_hospital, "action": "FLY"}
+                    ],
+                    "metadata": {
+                        "name": "Aerial Override (Direct Flight)",
+                        "badge": "AERIAL",
+                        "category": "Emergency Airspace Navigation",
+                        "evaluation_fn": "Direct Line-of-Sight",
+                        "optimality": "Guaranteed Optimal (No Traffic)",
+                        "time_complexity": "O(1)",
+                        "space_complexity": "O(1)",
+                        "criteria": "Triggered automatically when all surface corridors are completely obstructed.",
+                        "operational_focus": "Bypasses all roadblocks using an emergency helicopter."
+                    }
+                }
+            else:
+                return {
+                    "success": False,
+                    "status": "No route found.",
+                    "message": route_result.get("message", "No route found to hospital."),
+                    "emergency": emergency,
+                    "vehicle": assigned_vehicle,
+                    "facts": kb.get_all_facts(),
+                    "algorithm": route_result.get("algorithm", algo_key.upper()),
+                    "algo_metadata": route_result.get("metadata", {}),
+                    "comparisons": comparisons
+                }
 
         return {
             "success": True,

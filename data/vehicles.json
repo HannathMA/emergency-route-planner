@@ -32,5 +32,18 @@
             "Rescue",
             "First Aid"
         ]
+    },
+    {
+        "id": "KL-07-AIR-911",
+        "name": "Emergency Air Ambulance (Helicopter)",
+        "type": "Aerial Rescue Unit",
+        "location": "Aster_Medcity",
+        "available": true,
+        "equipment": [
+            "Cardiac",
+            "First Aid",
+            "Oxygen",
+            "Rescue"
+        ]
     }
 ]

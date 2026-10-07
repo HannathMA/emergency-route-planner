@@ -138,10 +138,10 @@ function onEmergencyChange() {
         return;
     }
 
-    const priorityBadge = emergency.priority.toUpperCase() === "CRITICAL" ? 
-        '<span class="status-badge status-danger">CRITICAL PRIORITY</span>' : 
+    const priorityBadge = emergency.priority.toUpperCase() === "CRITICAL" ?
+        '<span class="status-badge status-danger">CRITICAL PRIORITY</span>' :
         '<span class="status-badge status-idle" style="color: #b45309; background: #fffbeb;">HIGH PRIORITY</span>';
-    
+
     const locName = formatName(emergency.location);
     const hospName = formatName(emergency.target_hospital || "Aster_Medcity");
 
@@ -172,7 +172,7 @@ function onEmergencyChange() {
 // Helper to look up segment cost between two nodes
 function getRoadSegmentCost(source, dest) {
     if (!networkData.roads) return 0;
-    const road = networkData.roads.find(r => 
+    const road = networkData.roads.find(r =>
         (r.source === source && r.destination === dest) ||
         (r.source === dest && r.destination === source)
     );
@@ -220,6 +220,57 @@ async function loadScenario(scenarioType) {
     await dispatchEmergency();
 }
 
+async function generateRandomEmergency() {
+    playSound("click");
+    document.querySelectorAll(".preset-btn").forEach(b => b.classList.remove("active"));
+
+    // 1. Pick a random location that is NOT a hospital
+    let nodes = Object.keys(networkData.coordinates);
+    nodes = nodes.filter(n => n !== "Aster_Medcity" && n !== "Kaloor" && !n.includes("Hospital"));
+    if (nodes.length === 0) return;
+    const randomNode = nodes[Math.floor(Math.random() * nodes.length)];
+
+    // 2. Pick a random rich scenario template
+    const templates = [
+        { type: "Cardiac Arrest", equip: ["Cardiac", "Oxygen"], priority: "CRITICAL", hosp: "Kaloor", desc: "Patient collapsed with severe chest pain" },
+        { type: "Chemical Spill", equip: ["Rescue", "First Aid"], priority: "CRITICAL", hosp: "Aster_Medcity", desc: "Hazardous toxic leak requiring immediate evacuation" },
+        { type: "Mass Collision", equip: ["First Aid", "Oxygen"], priority: "CRITICAL", hosp: "Aster_Medcity", desc: "Multiple vehicles involved in a severe highway pileup" },
+        { type: "Building Fire", equip: ["Rescue", "First Aid"], priority: "HIGH", hosp: "Aster_Medcity", desc: "Structural fire reported with trapped individuals" },
+        { type: "Pedestrian Accident", equip: ["First Aid"], priority: "HIGH", hosp: "Aster_Medcity", desc: "Hit-and-run incident involving a pedestrian" },
+        { type: "Structural Collapse", equip: ["Rescue", "First Aid"], priority: "CRITICAL", hosp: "Aster_Medcity", desc: "Old building collapsed trapping residents" }
+    ];
+    const template = templates[Math.floor(Math.random() * templates.length)];
+
+    // 3. Assemble the fully populated dynamic emergency
+    const randomEmergency = {
+        id: "RND-" + Math.floor(Math.random() * 10000),
+        type: template.type,
+        description: `${template.desc} at ${formatName(randomNode)}`,
+        priority: template.priority,
+        location: randomNode,
+        target_hospital: template.hosp,
+        required_equipment: template.equip
+    };
+
+    // 4. Inject into application state
+    networkData.emergencies.push(randomEmergency);
+
+    // 5. Append to dropdown UI and select it
+    const select = document.getElementById("emergencySelect");
+    const option = document.createElement("option");
+    option.value = randomEmergency.id;
+    option.text = `[NEW] ${randomEmergency.type} (${randomEmergency.priority}) — ${formatName(randomNode)}`;
+    select.appendChild(option);
+
+    select.value = randomEmergency.id;
+    document.getElementById("dispatchAlgorithm").value = "auto";
+
+    onEmergencyChange();
+    showToast(`🚨 New ${randomEmergency.priority} emergency reported at ${formatName(randomNode)}!`, "warning");
+
+    await dispatchEmergency();
+}
+
 // Algorithm Quick Tabs Switcher
 async function switchAlgorithmTab(algoKey) {
     playSound("click");
@@ -248,12 +299,15 @@ async function dispatchEmergency() {
     statusBadge.className = "status-badge status-idle";
     statusBadge.innerText = "Computing Navigation...";
 
+    const fullEmergency = networkData.emergencies.find(e => e.id === emergencyId);
+
     try {
         const response = await fetch("/api/emergency/dispatch", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 emergency_id: emergencyId,
+                emergency: fullEmergency,
                 algorithm: algorithm
             })
         });
@@ -311,7 +365,7 @@ function renderFocusedAlgorithmOutput(data, selectedAlgo) {
         metricParadigm.innerText = meta.category || 'Search Algorithm';
         metricExpanded.innerText = `${data.expanded !== undefined ? data.expanded : '—'} Nodes`;
         metricOptimality.innerText = meta.optimality && meta.optimality.includes("Optimal") ? "Optimal" : "Suboptimal";
-        metricOptimality.className = meta.optimality && meta.optimality.includes("Optimal") ? "metric-val text-success" : "metric-val" ;
+        metricOptimality.className = meta.optimality && meta.optimality.includes("Optimal") ? "metric-val text-success" : "metric-val";
     } else {
         metricCost.innerText = "—";
         metricCostSub.innerText = "Route Blocked";
@@ -319,7 +373,7 @@ function renderFocusedAlgorithmOutput(data, selectedAlgo) {
         metricParadigm.innerText = meta.category || 'Search Algorithm';
         metricExpanded.innerText = "—";
         metricOptimality.innerText = "Failed";
-        metricOptimality.className = "metric-val" ;
+        metricOptimality.className = "metric-val";
     }
 
     // Visual Corridor Highway Progression Path
@@ -345,10 +399,11 @@ function renderFocusedAlgorithmOutput(data, selectedAlgo) {
 
             if (!isLast) {
                 const segCost = getRoadSegmentCost(node, data.path[i + 1]);
+                const displayCost = data.algorithm === "AERIAL" ? "AERIAL" : segCost + " km";
                 corridorHtml += `
                     <div class="path-arrow-step">
                         <span>→</span>
-                        <span>${segCost} km</span>
+                        <span>${displayCost}</span>
                     </div>
                 `;
             }
@@ -370,9 +425,9 @@ function renderFocusedAlgorithmOutput(data, selectedAlgo) {
                 <div class="action-step-item" id="actionStep-${i}">
                     <div class="action-step-main">
                         <span class="step-badge">Stage ${i + 1}</span>
-                        <span>Proceed via highway from <b>${formatName(act.from)}</b> to <b>${formatName(act.to)}</b></span>
+                        <span>${act.action === "FLY" ? "🚁 Fly directly via airspace from" : "Proceed via highway from"} <b>${formatName(act.from)}</b> to <b>${formatName(act.to)}</b></span>
                     </div>
-                    <span class="step-dist-badge">${segCost} km</span>
+                    <span class="step-dist-badge">${act.action === "FLY" ? "AERIAL" : segCost + " km"}</span>
                 </div>
             `;
         }).join("");
@@ -708,6 +763,20 @@ function renderNetworkSvg(activeSimNode = null) {
     const svg = document.getElementById("networkSvg");
     if (!svg || !networkData.roads) return;
 
+    // Get currently active emergency and hospital
+    const emergencySelect = document.getElementById("emergencySelect");
+    const activeEmergencyId = emergencySelect ? emergencySelect.value : null;
+    let activeEmergencyNode = null;
+    let activeHospitalNode = null;
+
+    if (activeEmergencyId && networkData.emergencies) {
+        const em = networkData.emergencies.find(e => e.id === activeEmergencyId);
+        if (em) {
+            activeEmergencyNode = em.location;
+            activeHospitalNode = em.target_hospital || "Aster_Medcity";
+        }
+    }
+
     let svgHtml = `
         <defs>
             <filter id="glow-route" x="-20%" y="-20%" width="140%" height="140%">
@@ -770,8 +839,8 @@ function renderNetworkSvg(activeSimNode = null) {
     const nodes = Object.keys(networkData.coordinates || {});
     nodes.forEach(node => {
         const p = projectCoord(node);
-        const isHospital = node.includes("Hospital") || node.includes("Medcity");
-        const isEmergency = node.includes("Infopark") || node.includes("Emergency");
+        const isHospital = (node === activeHospitalNode);
+        const isEmergency = (node === activeEmergencyNode);
         const onRoute = currentRoutePath.includes(node);
         const isCurrentSim = (activeSimNode === node);
 
