@@ -25,3 +25,5 @@ venv/
 ENV/
 .idea/
 .vscode/
+
+.vercel
